@@ -1,3 +1,4 @@
 rootProject.name = "RAMessage"
 include ':app'
 include ':ramessageservice'
+include ':ramessageservice:SharedLib'
