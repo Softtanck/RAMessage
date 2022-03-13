@@ -8,7 +8,7 @@ import com.shared.model.RaTestModel
  * Description: TODO
  */
 interface RaTestInterface {
-    fun testReturnAModel(testString: String, testNumber: Int): RaTestModel
-    fun testReturnAllList(testString: String): List<RaTestModel>
+    fun testReturnAModel(testString: String, testNumber: Int): RaTestModel?
+    fun testReturnAllList(testString: String): List<RaTestModel>?
     fun testVoid()
 }

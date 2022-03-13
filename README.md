@@ -15,12 +15,12 @@
 - 1. 先在客户端定义想要IPC的接口；
 ```kotlin
 interface RaTestInterface {
-    fun testReturnAModel(testString: String, testNumber: Int): RaTestModel
-    fun testReturnAllList(testString: String): List<RaTestModel>
+    fun testReturnAModel(testString: String, testNumber: Int): RaTestModel?
+    fun testReturnAllList(testString: String): List<RaTestModel>?
     fun testVoid()
 }
 ```
-- 2. 在客户端绑定远程服务成功后，通过 ```kotlinRaClientApi.INSTANCE.create(RaTestInterface::class.java)```方法即可获得对应服务，然后调用对应接口即可；
+- 2. 在客户端绑定远程服务成功后，通过 ```RaClientApi.INSTANCE.create(RaTestInterface::class.java)```方法即可获得对应服务，然后调用对应接口即可；
 #### 客户端示例    
 ```kotlin
 RaClientApi.INSTANCE.bindRaConnectionService(this, ComponentName("com.softtanck.ramessageservice", "com.softtanck.ramessageservice.RaConnectionService"), object : BindStateListener {
@@ -44,8 +44,8 @@ RaClientApi.INSTANCE.bindRaConnectionService(this, ComponentName("com.softtanck.
         })
 ```
 ### 服务端
-- 1. 继承```kotlinBaseConnectionService```
-- 2. 实现```kotlinRaTestInterface```接口
+- 1. 继承```BaseConnectionService```
+- 2. 实现```RaTestInterface```接口
 #### 服务端示例    
 ```kotlin
 class RaConnectionService : BaseConnectionService(), RaTestInterface {
@@ -68,8 +68,9 @@ class RaConnectionService : BaseConnectionService(), RaTestInterface {
 ## 注意（参数或返回值为基本类型【包含String】**无需关心**）
 - 当参数是对象的时候，该对象必须实现Parcelable接口；
 - 当客户端期望的接口的返回值是对象的时候，该对象必须实现Parcelable接口；
+- 接口如果有返回值，但是如果远程调用失败，返回值为空，请注意「**空指针**」异常；
 例如：
-该接口```kotlinfun testReturnAModel(testString: String, testNumber: Int): RaTestModel```中的```RaTestModel```需要实现Parcelable，且服务端和客户端都需要定义**相同包名**的类；
+该接口```fun testReturnAModel(testString: String, testNumber: Int): RaTestModel```中的```RaTestModel```需要实现Parcelable，且服务端和客户端都需要定义**相同包名**的类；
 # Licence
 ```
 Copyright 2022 Softtanck.

@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
                 Log.d("~~~", "connectedToRaServices: $this")
                 val testInterface = RaClientApi.INSTANCE.create(RaTestInterface::class.java)
                 val testReturnAModel = testInterface.testReturnAModel("I am from the caller", 1)
-                Log.d("~~~", "testReturnAModel:$testReturnAModel")
+                Log.d("~~~", "testReturnAModel:${testReturnAModel?.testString}")
                 val testReturnAllList = testInterface.testReturnAllList("I am from the caller")
                 Log.d("~~~", "testReturnAllList:$testReturnAllList")
                 testInterface.testVoid()
