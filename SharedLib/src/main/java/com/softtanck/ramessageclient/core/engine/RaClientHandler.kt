@@ -83,7 +83,7 @@ class RaClientHandler : BaseClientHandler {
                         val iterator = BindStateListenerManager.INSTANCE.getAllListener().iterator()
                         while (iterator.hasNext()) {
                             val bindStateListener = iterator.next()
-                            bindStateListener.connectedToRaServices()
+                            bindStateListener.onConnectedToRaServices()
                         }
                     } else {
                         Log.w(TAG, "[CLIENT] Already scheduled, Ignore this request, isConnected: $isConnected, Thread:${Thread.currentThread()}")
@@ -101,7 +101,7 @@ class RaClientHandler : BaseClientHandler {
                         val iterator = BindStateListenerManager.INSTANCE.getAllListener().iterator()
                         while (iterator.hasNext()) {
                             val bindStateListener = iterator.next()
-                            bindStateListener.disconnectedFromRaServices(disconnectedReason)
+                            bindStateListener.onDisconnectedFromRaServices(disconnectedReason)
                         }
                     } else {
                         Log.w(TAG, "[CLIENT] Already scheduled, Ignore this request, isConnected: $isConnected, Thread:${Thread.currentThread()}")

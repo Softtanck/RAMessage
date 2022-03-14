@@ -18,7 +18,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         RaClientApi.INSTANCE.bindRaConnectionService(this, ComponentName("com.softtanck.ramessageservice", "com.softtanck.ramessageservice.RaConnectionService"), object : BindStateListener {
-            override fun connectedToRaServices() {
+            override fun onConnectedToRaServices() {
                 Log.d("~~~", "connectedToRaServices: $this")
                 val testInterface = RaClientApi.INSTANCE.create(RaTestInterface::class.java)
                 val testReturnAModel = testInterface.testReturnAModel("I am from the caller", 1)
@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
                 Log.d("~~~", "onConnectRaServicesFailed: ")
             }
 
-            override fun disconnectedFromRaServices(@DisconnectedReason disconnectedReason: Int) {
+            override fun onDisconnectedFromRaServices(@DisconnectedReason disconnectedReason: Int) {
                 Log.d("~~~", "disconnectedFromRaServices: $disconnectedReason")
             }
         })
