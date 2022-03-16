@@ -9,6 +9,7 @@ import android.util.SparseArray
 import com.softtanck.model.RaCustomMessenger
 import com.softtanck.ramessageclient.core.listener.RaRemoteMessageListener
 import java.lang.ref.WeakReference
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -29,6 +30,12 @@ open class BaseClientHandler : Handler {
      */
     private val msgTransactionNumber = AtomicInteger(0)
 
+    /**
+     * A flag to show the status of client.
+     * true: Bound, otherwise not.
+     */
+    protected val clientBoundStatus = AtomicBoolean(false)
+
     @Volatile
     protected var outputMessenger: RaCustomMessenger? = null
 
@@ -43,16 +50,21 @@ open class BaseClientHandler : Handler {
      * @param message the message
      * @return null or message from server
      */
-    protected fun sendMsgSync(message: Message): Message? = try {
-        if (outputMessenger != null) {
-            outputMessenger!!.sendSync(message.apply {
-                arg1 = safelyIncrement()
-            })
-        } else {
+    protected fun sendMsgSync(message: Message): Message? = if (clientBoundStatus.get()) {
+        try {
+            if (outputMessenger != null) {
+                outputMessenger!!.sendSync(message.apply {
+                    arg1 = safelyIncrement()
+                })
+            } else {
+                null
+            }
+        } catch (e: RemoteException) {
+            Log.e(TAG, "[CLIENT] Failed to send sync msg to server, msg: $message, reason: ${e.message}")
             null
         }
-    } catch (e: RemoteException) {
-        Log.e(TAG, "[CLIENT] Failed to send sync msg to server, msg: $message, reason: ${e.message}")
+    } else {
+        Log.w(TAG, "[CLIENT] You are disconnected with server, Ignore this the message. msg:$message")
         null
     }
 
@@ -62,15 +74,21 @@ open class BaseClientHandler : Handler {
      * @param raRemoteMessageListener remote callback
      */
     protected fun sendMsgAsync(message: Message, raRemoteMessageListener: RaRemoteMessageListener?) {
-        try {
-            outputMessenger?.send(message.apply {
-                arg1 = safelyIncrement()
-                synchronized(callbacks) { // Make sure it is thread-safely
-                    callbacks.put(arg1, WeakReference(raRemoteMessageListener))
-                }
-            })
-        } catch (e: RemoteException) {
-            Log.e(TAG, "[CLIENT] Failed to send sync msg to server, msg: $message, reason: ${e.message}")
+        if (clientBoundStatus.get()) {
+            try {
+                outputMessenger?.send(message.apply {
+                    arg1 = safelyIncrement()
+                    synchronized(callbacks) { // Make sure it is thread-safely
+                        callbacks.put(arg1, WeakReference(raRemoteMessageListener))
+                    }
+                })
+            } catch (e: RemoteException) {
+                Log.e(TAG, "[CLIENT] Failed to send sync msg to server, msg: $message, reason: ${e.message}")
+                safelyNULLCallbackRemoteMessage(raRemoteMessageListener)
+            }
+        } else {
+            Log.w(TAG, "[CLIENT] You are disconnected with server, Ignore this the message. msg:$message")
+            safelyNULLCallbackRemoteMessage(raRemoteMessageListener)
         }
     }
 
@@ -84,6 +102,15 @@ open class BaseClientHandler : Handler {
             while (!msgTransactionNumber.compareAndSet(msgTransactionNumber.get(), 0));
         }
         return msgTransactionNumber.get()
+    }
+
+    // TODO : TBD
+    private fun safelyNULLCallbackRemoteMessage(raRemoteMessageListener: RaRemoteMessageListener?) {
+        try {
+            raRemoteMessageListener?.onMessageArrived(null)
+        } finally {
+
+        }
     }
 
 }

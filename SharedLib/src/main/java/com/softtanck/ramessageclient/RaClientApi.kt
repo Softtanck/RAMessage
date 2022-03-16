@@ -20,8 +20,9 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Message
 import android.os.Parcelable
-import com.softtanck.*
-import com.softtanck.model.RaRequestTypeArg
+import com.softtanck.MESSAGE_BUNDLE_METHOD_NAME_KEY
+import com.softtanck.MESSAGE_BUNDLE_TYPE_ARG_KEY
+import com.softtanck.MESSAGE_BUNDLE_TYPE_PARAMETER_KEY
 import com.softtanck.model.RaRequestTypeParameter
 import com.softtanck.ramessageclient.core.BaseServiceConnection
 import com.softtanck.ramessageclient.core.RaServiceConnector
@@ -30,6 +31,7 @@ import com.softtanck.ramessageclient.core.engine.retrofit.RaRetrofit
 import com.softtanck.ramessageclient.core.listener.BindStateListener
 import com.softtanck.ramessageclient.core.listener.BindStateListenerManager
 import com.softtanck.ramessageclient.core.listener.RaRemoteMessageListener
+import com.softtanck.ramessageclient.core.util.ResponseHandler
 
 /**
  * @author Softtanck
@@ -115,7 +117,7 @@ class RaClientApi private constructor() {
      * @param requestParameters the requestParameters.
      * @param requestArgs the requestArgs.
      */
-    fun <T> remoteMethodCallSync(remoteMethodName: String, requestParameters: ArrayList<RaRequestTypeParameter>, requestArgs: ArrayList<RaRequestTypeArg>): T? {
+    fun <T, F : Parcelable> remoteMethodCallSync(remoteMethodName: String, requestParameters: ArrayList<RaRequestTypeParameter>, requestArgs: ArrayList<F>): T? {
         val msg = RaClientHandler.INSTANCE.sendMsgToServerSync(Message.obtain().apply {
             val bundle = Bundle()
             bundle.putString(MESSAGE_BUNDLE_METHOD_NAME_KEY, remoteMethodName)
@@ -123,21 +125,7 @@ class RaClientApi private constructor() {
             bundle.putParcelableArrayList(MESSAGE_BUNDLE_TYPE_ARG_KEY, requestArgs)
             data = bundle
         })
-        val serBundle: Bundle = msg?.data ?: return null
-        val remoteInvokeResult = serBundle.apply { classLoader = this@RaClientApi.javaClass.classLoader }.run {
-            when (getInt(MESSAGE_BUNDLE_RSP_TYPE_KEY)) {
-                MESSAGE_BUNDLE_PARCELABLE_TYPE -> {
-                    getParcelable<Parcelable>(MESSAGE_BUNDLE_NORMAL_RSP_KEY)
-                }
-                MESSAGE_BUNDLE_ARRAYLIST_TYPE -> {
-                    getParcelableArrayList<Parcelable>(MESSAGE_BUNDLE_NORMAL_RSP_KEY)
-                }
-                else -> {
-                    null
-                }
-            }
-        }
-        return remoteInvokeResult as? T
+        return ResponseHandler.makeupMessageForRsp(msg)
     }
 
     /**
@@ -147,7 +135,7 @@ class RaClientApi private constructor() {
      * @param raRemoteMessageListener the [RaRemoteMessageListener], can be NULL.
      */
     @JvmOverloads
-    fun remoteMethodCallAsync(remoteMethodName: String, requestParameters: ArrayList<RaRequestTypeParameter>, args: ArrayList<RaRequestTypeArg>, raRemoteMessageListener: RaRemoteMessageListener? = null) {
+    fun <T : Parcelable> remoteMethodCallAsync(remoteMethodName: String, requestParameters: ArrayList<RaRequestTypeParameter>, args: ArrayList<T>, raRemoteMessageListener: RaRemoteMessageListener? = null) {
         RaClientHandler.INSTANCE.sendMsgToServerAsync(Message.obtain().apply {
             val bundle = Bundle()
             bundle.putString(MESSAGE_BUNDLE_METHOD_NAME_KEY, remoteMethodName)

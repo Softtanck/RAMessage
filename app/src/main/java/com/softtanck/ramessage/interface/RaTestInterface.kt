@@ -11,4 +11,8 @@ interface RaTestInterface {
     fun testReturnAModel(testString: String, testNumber: Int): RaTestModel?
     fun testReturnAllList(testString: String): List<RaTestModel>?
     fun testVoid()
+    fun testBoolean(): Boolean
+    fun testString(): String
+
+    suspend fun suspendFun(): Boolean
 }

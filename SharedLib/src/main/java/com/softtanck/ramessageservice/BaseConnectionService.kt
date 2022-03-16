@@ -36,19 +36,46 @@ abstract class BaseConnectionService : Service() {
                 if (TextUtils.isEmpty(remoteName)) return null
                 Log.d(TAG, "[SERVER] remoteMethodName:$remoteName")
                 val requestParameters: ArrayList<RaRequestTypeParameter> = serBundle.getParcelableArrayList<RaRequestTypeParameter>(MESSAGE_BUNDLE_TYPE_PARAMETER_KEY) as ArrayList<RaRequestTypeParameter>
-                val requestArgs: ArrayList<RaRequestTypeArg> = serBundle.getParcelableArrayList<RaRequestTypeArg>(MESSAGE_BUNDLE_TYPE_ARG_KEY) as ArrayList<RaRequestTypeArg>
-                val getPdfData: Method = this.javaClass.getDeclaredMethod(remoteName!!, *Array(requestParameters.size) { requestParameters[it].parameterTypeClasses })
-                getPdfData.isAccessible = true
-                val remoteCallResult = getPdfData.invoke(this, *Array(requestArgs.size) { requestArgs[it].arg })
+                val requestArgs: ArrayList<Parcelable> = serBundle.getParcelableArrayList<Parcelable>(MESSAGE_BUNDLE_TYPE_ARG_KEY) as ArrayList<Parcelable>
+                val remoteMethod: Method = this.javaClass.getDeclaredMethod(remoteName!!, *Array(requestParameters.size) { requestParameters[it].parameterTypeClasses })
+                remoteMethod.isAccessible = true
+                val remoteCallResult = remoteMethod.invoke(this, *Array(requestArgs.size) {
+                    if (requestArgs[it] is RaRequestTypeArg) {
+                        (requestArgs[it] as RaRequestTypeArg).arg
+                    } else {
+                        requestArgs[it]
+                    }
+                })
                 message.arg1 = message.arg1 // Remember the callback key
                 message.data = Bundle().apply {
-                    if (remoteCallResult is Parcelable) {
-                        putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_PARCELABLE_TYPE)
-                        putParcelable(MESSAGE_BUNDLE_NORMAL_RSP_KEY, remoteCallResult as Parcelable?)
-                    } else if (remoteCallResult is ArrayList<*>) {
-                        putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_ARRAYLIST_TYPE)
-                        putParcelableArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY, remoteCallResult as java.util.ArrayList<out Parcelable>?)
+                    when (remoteCallResult) {
+                        is Parcelable -> {
+                            putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_PARCELABLE_TYPE)
+                            putParcelable(MESSAGE_BUNDLE_NORMAL_RSP_KEY, remoteCallResult as Parcelable?)
+                        }
+                        is ArrayList<*> -> {
+                            // FIXME : 这儿可能会crash，如果是List<String>.因为这儿强制要求的是一个Parcelable.
+                            putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_ARRAYLIST_TYPE)
+                            putParcelableArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY, remoteCallResult as java.util.ArrayList<out Parcelable>?)
+                        }
+                        is Boolean -> {
+                            putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_BOOLEAN_TYPE)
+                            putBoolean(MESSAGE_BUNDLE_NORMAL_RSP_KEY, remoteCallResult)
+                        }
+                        is Char -> {
+                            putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_CHAR_TYPE)
+                            putChar(MESSAGE_BUNDLE_NORMAL_RSP_KEY, remoteCallResult)
+                        }
+                        is String -> {
+                            putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_STRING_TYPE)
+                            putString(MESSAGE_BUNDLE_NORMAL_RSP_KEY, remoteCallResult)
+                        }
+                        is Byte -> {
+                            putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_BYTE_TYPE)
+                            putByte(MESSAGE_BUNDLE_NORMAL_RSP_KEY, remoteCallResult)
+                        }
                     }
+                    // TODO ： More details will be implemented
                 }
             }
         } catch (e: Exception) {

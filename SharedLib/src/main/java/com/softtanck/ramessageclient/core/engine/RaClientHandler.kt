@@ -13,7 +13,6 @@ import com.softtanck.model.RaCustomMessenger
 import com.softtanck.ramessageclient.core.RaServiceConnector
 import com.softtanck.ramessageclient.core.listener.*
 import com.softtanck.ramessageclient.core.util.LockHelper
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * @author Softtanck
@@ -24,12 +23,6 @@ class RaClientHandler : BaseClientHandler {
     constructor() : super()
     constructor(looper: Looper) : super(looper)
     constructor(looper: Looper, callback: Callback) : super(looper, callback)
-
-    /**
-     * A flag to show the status of client.
-     * true: Bound, otherwise not.
-     */
-    private val clientBoundStatus = AtomicBoolean(false)
 
     companion object {
         private val TAG: String = RaServiceConnector::class.java.simpleName
@@ -123,17 +116,8 @@ class RaClientHandler : BaseClientHandler {
     }
 
     fun sendMsgToServerAsync(message: Message, raRemoteMessageListener: RaRemoteMessageListener? = null) {
-        if (clientBoundStatus.get()) {
-            sendMsgAsync(message.apply { what = MESSAGE_CLIENT_REQ }, raRemoteMessageListener)
-        } else {
-            Log.w(TAG, "[CLIENT] You are disconnected with server, Ignore this the message. msg:$message")
-        }
+        sendMsgAsync(message.apply { what = MESSAGE_CLIENT_REQ }, raRemoteMessageListener)
     }
 
-    fun sendMsgToServerSync(message: Message): Message? = if (clientBoundStatus.get()) {
-        sendMsgSync(message.apply { what = MESSAGE_CLIENT_REQ })
-    } else {
-        Log.w(TAG, "[CLIENT] You are disconnected with server, Ignore this the message. msg:$message")
-        null
-    }
+    fun sendMsgToServerSync(message: Message): Message? = sendMsgSync(message.apply { what = MESSAGE_CLIENT_REQ })
 }

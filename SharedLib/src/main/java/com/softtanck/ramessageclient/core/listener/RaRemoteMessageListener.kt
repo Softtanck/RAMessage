@@ -10,7 +10,7 @@ import android.os.Message
 fun interface RaRemoteMessageListener {
     /**
      * This method will be invoked if the message is arrived from outside.
-     * @param message the message
+     * @param message the message, null will be returned if request is failed.
      */
-    fun onMessageArrived(message: Message)
+    fun onMessageArrived(message: Message?)
 }
