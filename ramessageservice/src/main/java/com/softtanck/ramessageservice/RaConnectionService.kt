@@ -36,4 +36,9 @@ class RaConnectionService : BaseConnectionService(), RaTestInterface {
         Log.d("~~~", "testString: ")
         return "你好"
     }
+
+    override fun testSendString(testString: String): String {
+        Log.d("~~~", "testSendString: $testString")
+        return "你好2"
+    }
 }

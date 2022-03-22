@@ -4,6 +4,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.os.IBinder
 import android.os.Message
+import android.os.Messenger
+import android.os.Parcelable
 import android.util.Log
 import com.softtanck.MESSAGE_REGISTER_CLIENT_REQ
 import com.softtanck.model.RaCustomMessenger
@@ -14,19 +16,40 @@ import com.softtanck.ramessageclient.core.engine.RaClientHandler
  * @date 2022/3/12
  * Description: TODO
  */
-internal class RaServiceConnector(context: Context) : BaseServiceConnection(context) {
+internal class RaServiceConnector(context: Context) : BaseServiceConnection<Parcelable>(context) {
 
-    private val TAG: String = RaServiceConnector::class.java.simpleName
+    companion object {
+        private val TAG: String = RaServiceConnector::class.java.simpleName
+        private const val RAMESSENGER_DESCRIPTOR = "com.softtanck.ramessage.IRaMessenger"
+    }
 
     // NOTE: This method works on Main thread.
     override fun onServiceConnected(name: ComponentName, service: IBinder) {
-        Log.d(TAG, "[CLIENT] onServiceConnected : $name, thread:${Thread.currentThread()}")
-        outBoundMessenger = RaCustomMessenger(service)
+        Log.d(TAG, "[CLIENT] onServiceConnected : $name, serviceDesc:${service.interfaceDescriptor}, thread:${Thread.currentThread()}")
+        outBoundMessenger = if (RAMESSENGER_DESCRIPTOR == service.interfaceDescriptor) {
+            RaCustomMessenger(service)
+        } else {
+            Messenger(service)
+        }
         if (outBoundMessenger != null) {
             RaClientHandler.INSTANCE.setOutBoundMessenger(outBoundMessenger)
-            outBoundMessenger!!.send(Message.obtain(null, MESSAGE_REGISTER_CLIENT_REQ).apply {
-                replyTo = RaClientHandler.INSTANCE.getInBoundMessenger()
-            })
+            when (outBoundMessenger) {
+                is RaCustomMessenger -> {
+                    Log.d(TAG, "[CLIENT] Use the custom messenger, now")
+                    (outBoundMessenger as RaCustomMessenger).send(Message.obtain(null, MESSAGE_REGISTER_CLIENT_REQ).apply {
+                        replyTo = RaClientHandler.INSTANCE.getInBoundMessenger()
+                    })
+                }
+                is Messenger -> {
+                    Log.w(TAG, "[CLIENT] Use the default messenger")
+                    (outBoundMessenger as Messenger).send(Message.obtain(null, MESSAGE_REGISTER_CLIENT_REQ).apply {
+                        replyTo = RaClientHandler.INSTANCE.getInBoundMessenger()
+                    })
+                }
+                else -> {
+                    Log.e(TAG, "[CLIENT] Failed to send msg to server, Since outBoundMessenger type is unknown")
+                }
+            }
         } else {
             Log.e(TAG, "[CLIENT] Failed to send msg to server, Since outBoundMessenger is null")
         }

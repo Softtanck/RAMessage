@@ -55,7 +55,7 @@ internal open class BaseServerSyncHandler : Handler {
             ReflectionUtils.getIMessengerFromSystem(this)
         } else {
             // HOOK the messenger
-            val messageQueue: MessageQueue = ReflectionUtils.getMessageQueueFromHandler(this) ?: return null
+            val messageQueue: MessageQueue = ReflectionUtils.getMessageQueueFromHandler(this) ?: return getIMessenger(true)
             synchronized(messageQueue) {
                 if (_innerMessenger != null) {
                     return _innerMessenger

@@ -113,7 +113,7 @@ abstract class BaseConnectionService : Service() {
         return if (raCustomMessenger.binder != null && clientVersionCode != -1 && RaCustomMessenger.raMsgVersion.second >= clientVersionCode) {
             raCustomMessenger.binder
         } else {
-            (customProcessHandler.getIMessenger() as IInterface).asBinder()
+            throw IllegalStateException("[SERVER] Failed to get the Messenger, Please check your handler")
         }
     }
 

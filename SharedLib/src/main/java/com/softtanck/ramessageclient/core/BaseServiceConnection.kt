@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.os.Parcelable
 import android.util.Log
 import com.softtanck.model.RaCustomMessenger
 import com.softtanck.ramessageclient.core.engine.RaClientHandler
@@ -17,10 +18,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @date 2022/3/12
  * Description: TODO
  */
-abstract class BaseServiceConnection(private val context: Context) : ServiceConnection {
+abstract class BaseServiceConnection<T : Parcelable>(private val context: Context) : ServiceConnection {
     private val TAG: String = this.javaClass.simpleName
 
-    protected var outBoundMessenger: RaCustomMessenger? = null
+    protected var outBoundMessenger: T? = null
 
     // Current bind is in progress
     private val bindInProgress = AtomicBoolean(false)

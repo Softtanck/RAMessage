@@ -1,15 +1,11 @@
 package com.softtanck.ramessageclient.core.engine
 
-import android.os.HandlerThread
-import android.os.Looper
-import android.os.Message
-import android.os.Messenger
+import android.os.*
 import android.util.Log
 import com.softtanck.MESSAGE_CLIENT_DISCONNECT_REQ
 import com.softtanck.MESSAGE_CLIENT_REQ
 import com.softtanck.MESSAGE_CLIENT_RSP
 import com.softtanck.MESSAGE_REGISTER_CLIENT_RSP
-import com.softtanck.model.RaCustomMessenger
 import com.softtanck.ramessageclient.core.RaServiceConnector
 import com.softtanck.ramessageclient.core.listener.*
 import com.softtanck.ramessageclient.core.util.LockHelper
@@ -19,7 +15,7 @@ import com.softtanck.ramessageclient.core.util.LockHelper
  * @date 2022/3/12
  * Description: TODO
  */
-class RaClientHandler : BaseClientHandler {
+class RaClientHandler : BaseClientHandler<Parcelable> {
     constructor() : super()
     constructor(looper: Looper) : super(looper)
     constructor(looper: Looper, callback: Callback) : super(looper, callback)
@@ -43,7 +39,7 @@ class RaClientHandler : BaseClientHandler {
      * @param outBoundMessenger the outBoundMessenger from server
      */
     @Synchronized
-    fun setOutBoundMessenger(outBoundMessenger: RaCustomMessenger?) {
+    fun <T : Parcelable> setOutBoundMessenger(outBoundMessenger: T?) {
         outputMessenger = outBoundMessenger
     }
 

@@ -1,5 +1,5 @@
-# 🔥🔥🔥一个类似Retrofit的IPC通信框架，支持Java、Kotlin以及同步调用、异步调用、协程（正在进行）
-一个高可用、高维护、高性能、线程安全的IPC通信框架。（Android全平台支持）
+# 🔥🔥🔥一个类似Retrofit的IPC通信框架，支持Java、Kotlin以及同步调用、异步调用、协程
+一个高可用、高维护、高性能、线程安全的IPC通信框架。（Android全平台支持，仅98kb）
 - Kotlin 👍
 - Java 👍
 - Android 4 - Android 12+ 👍

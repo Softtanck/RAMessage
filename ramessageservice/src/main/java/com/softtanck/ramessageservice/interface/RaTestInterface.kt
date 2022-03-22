@@ -13,4 +13,5 @@ interface RaTestInterface {
     fun testVoid()
     fun testBoolean(): Boolean
     fun testString(): String
+    fun testSendString(testString: String): String
 }

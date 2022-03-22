@@ -1,9 +1,6 @@
 package com.softtanck.ramessageclient.core.engine
 
-import android.os.Handler
-import android.os.Looper
-import android.os.Message
-import android.os.RemoteException
+import android.os.*
 import android.util.Log
 import android.util.SparseArray
 import com.softtanck.model.RaCustomMessenger
@@ -17,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * @date 2022/3/12
  * Description: TODO
  */
-open class BaseClientHandler : Handler {
+open class BaseClientHandler<T : Parcelable> : Handler {
     private val TAG: String = this.javaClass.simpleName
 
     constructor() : super()
@@ -37,7 +34,7 @@ open class BaseClientHandler : Handler {
     protected val clientBoundStatus = AtomicBoolean(false)
 
     @Volatile
-    protected var outputMessenger: RaCustomMessenger? = null
+    protected var outputMessenger: T? = null
 
     /**
      * Remember all callbacks from the client. And WeakReference is used as value.
@@ -52,12 +49,12 @@ open class BaseClientHandler : Handler {
      */
     protected fun sendMsgSync(message: Message): Message? = if (clientBoundStatus.get()) {
         try {
-            if (outputMessenger != null) {
-                outputMessenger!!.sendSync(message.apply {
+            if (outputMessenger != null && outputMessenger is RaCustomMessenger) {
+                (outputMessenger as RaCustomMessenger).sendSync(message.apply {
                     arg1 = safelyIncrement()
                 })
             } else {
-                null
+                throw IllegalArgumentException("Only the custom messenger can be used to send the sync message")
             }
         } catch (e: RemoteException) {
             Log.e(TAG, "[CLIENT] Failed to send sync msg to server, msg: $message, reason: ${e.message}")
@@ -76,12 +73,27 @@ open class BaseClientHandler : Handler {
     protected fun sendMsgAsync(message: Message, raRemoteMessageListener: RaRemoteMessageListener?) {
         if (clientBoundStatus.get()) {
             try {
-                outputMessenger?.send(message.apply {
-                    arg1 = safelyIncrement()
-                    synchronized(callbacks) { // Make sure it is thread-safely
-                        callbacks.put(arg1, WeakReference(raRemoteMessageListener))
+                when (outputMessenger) {
+                    is RaCustomMessenger -> {
+                        (outputMessenger as? RaCustomMessenger)?.send(message.apply {
+                            arg1 = safelyIncrement()
+                            synchronized(callbacks) { // Make sure it is thread-safely
+                                callbacks.put(arg1, WeakReference(raRemoteMessageListener))
+                            }
+                        })
                     }
-                })
+                    is Messenger -> {
+                        (outputMessenger as? Messenger)?.send(message.apply {
+                            arg1 = safelyIncrement()
+                            synchronized(callbacks) { // Make sure it is thread-safely
+                                callbacks.put(arg1, WeakReference(raRemoteMessageListener))
+                            }
+                        })
+                    }
+                    else -> {
+                        Log.e(TAG, "[CLIENT] Failed to send sync msg to server, since your messenger is null, msg: $message")
+                    }
+                }
             } catch (e: RemoteException) {
                 Log.e(TAG, "[CLIENT] Failed to send sync msg to server, msg: $message, reason: ${e.message}")
                 safelyNULLCallbackRemoteMessage(raRemoteMessageListener)
