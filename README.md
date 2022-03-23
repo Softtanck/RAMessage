@@ -80,6 +80,11 @@ class RaConnectionService : BaseConnectionService(), RaTestInterface {
     override fun testVoid() {
         Log.d("~~~", "[SERVER] testVoid: Service is invoked")
     }
+
+    override fun suspendFun(): Boolean {
+        Log.d("~~~", "[SERVER] suspendFun: Service is invoked")
+        return true
+    }
 }
 ```
 ## 一些说明和TODO

@@ -41,6 +41,7 @@ interface MyServerTestFunImpl : RaTestInterface {
     }
 
     override fun suspendFun(): Boolean {
-        TODO("Not yet implemented")
+        Log.d("~~~", "[SERVER] suspendFun: Service is invoked")
+        return true
     }
 }

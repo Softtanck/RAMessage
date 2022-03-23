@@ -80,17 +80,19 @@ abstract class RemoteServiceMethod<ResponseT, ReturnT> extends ServiceMethod<Ret
             synchronized (parameters) {
                 parameters.clear();
                 for (Class<?> parameterType : method.getParameterTypes()) {
+                    if (Utils.getRawType(parameterType) == Continuation.class) continue;
                     parameters.add(new RaRequestTypeParameter(parameterType));
                 }
             }
             synchronized (argsList) {
                 argsList.clear();
                 for (Object arg : args) {
+                    if (arg instanceof Continuation) continue;
                     if (arg instanceof Parcelable) argsList.add((T) arg);
                     else argsList.add((T) new RaRequestTypeArg(arg));
                 }
             }
-
+            Log.d(TAG, "[CLIENT] Start the remote methods, methodName:" + method.getName() + ", parameters.size:" + parameters.size() + ", argsList.size:" + argsList.size());
             // See SuspendForBody for explanation about this try/catch.
             try {
                 return (ReturnT) KotlinExtensions.awaitResponse(method.getName(), parameters, argsList, continuation);
