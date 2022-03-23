@@ -19,9 +19,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-//        GlobalScope.launch {
-//            suspendTestFun()
-//        }
         RaClientApi.INSTANCE.bindRaConnectionService(this, ComponentName("com.softtanck.ramessageservice", "com.softtanck.ramessageservice.RaConnectionService"), object : BindStateListener {
             override fun onConnectedToRaServices() {
                 Log.d("~~~", "connectedToRaServices: $this")
@@ -35,6 +32,9 @@ class MainActivity : AppCompatActivity() {
                 Log.d("~~~", "testBoolean: $testBoolean")
                 val testString = testInterface.testString()
                 Log.d("~~~", "testString: $testString")
+                GlobalScope.launch {
+                    suspendTestFun()
+                }
             }
 
             override fun onConnectRaServicesFailed() {

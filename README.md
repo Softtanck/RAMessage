@@ -19,11 +19,18 @@ interface RaTestInterface {
     fun testReturnAModel(testString: String, testNumber: Int): RaTestModel?
     fun testReturnAllList(testString: String): List<RaTestModel>?
     fun testVoid()
+    fun testBoolean(): Boolean
+    fun testString(): String
+    fun testSendString(testString: String): String
+
+    // 推荐使用
+    suspend fun suspendFun(): Boolean
 }
 ```
 - 2. 在客户端绑定远程服务成功后，通过 ```RaClientApi.INSTANCE.create(RaTestInterface::class.java)```方法即可获得对应服务，然后调用对应接口即可；
 #### 客户端示例    
 ```kotlin
+// 1. 提供被绑定的远程服务器名字；2. 在绑定成功后，调用远程服务即可；
 RaClientApi.INSTANCE.bindRaConnectionService(this, ComponentName("com.softtanck.ramessageservice", "com.softtanck.ramessageservice.RaConnectionService"), object : BindStateListener {
     override fun onConnectedToRaServices() {
         Log.d("~~~", "connectedToRaServices: $this")
@@ -66,6 +73,10 @@ class RaConnectionService : BaseConnectionService(), RaTestInterface {
     }
 }
 ```
+## 一些说明和TODO
+- 推荐使用协程的方式调用，因为协程方式的默认内部走异步逻辑，某些情况性能更佳；
+- 非协程且方法带有返回值，默认走同步逻辑，调用在那个线程，任务就在那个线程执行；
+- 非协程且方法不带返回值，默认走异步逻辑，远程任务永远在子线程中运行 且 排队；
 ## 注意（参数或返回值为基本类型【包含String】**无需关心**）
 - 当参数是对象的时候，该对象必须实现Parcelable接口；
 - 当客户端期望的接口的返回值是对象的时候，该对象必须实现Parcelable接口；
