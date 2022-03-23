@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.softtanck.ramessageservice
+package com.softtanck.ramessageservice.engine
 
 import android.os.Handler
 import android.os.Looper
@@ -21,6 +21,7 @@ import android.os.Message
 import android.os.MessageQueue
 import com.softtanck.ramessage.IRaMessenger
 import com.softtanck.ramessageclient.core.util.ReflectionUtils
+import com.softtanck.ramessageservice.BaseConnectionService
 
 /**
  * @author Softtanck

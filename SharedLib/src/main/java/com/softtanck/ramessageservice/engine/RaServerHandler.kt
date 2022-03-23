@@ -1,4 +1,4 @@
-package com.softtanck.ramessageservice
+package com.softtanck.ramessageservice.engine
 
 import android.os.Looper
 import android.os.Message
@@ -10,6 +10,7 @@ import com.softtanck.MESSAGE_CLIENT_RSP
 import com.softtanck.MESSAGE_REGISTER_CLIENT_REQ
 import com.softtanck.MESSAGE_REGISTER_CLIENT_RSP
 import com.softtanck.model.RaClient
+import com.softtanck.ramessageservice.BaseConnectionService
 import com.softtanck.sharedlib.BuildConfig
 
 internal class RaServerHandler internal constructor(looper: Looper, private val baseConnectionService: BaseConnectionService) : BaseServerSyncHandler(looper, baseConnectionService) {
