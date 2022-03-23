@@ -39,4 +39,8 @@ interface MyServerTestFunImpl : RaTestInterface {
         Log.d("~~~", "testSendString: $testString")
         return "你好2"
     }
+
+    override fun suspendFun(): Boolean {
+        TODO("Not yet implemented")
+    }
 }

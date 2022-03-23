@@ -40,6 +40,9 @@ RaClientApi.INSTANCE.bindRaConnectionService(this, ComponentName("com.softtanck.
         val testReturnAllList = testInterface.testReturnAllList("I am from the caller")
         Log.d("~~~", "testReturnAllList:$testReturnAllList")
         testInterface.testVoid()
+        GlobalScope.launch {
+            suspendTestFun()
+        }
     }
 
     override fun onConnectRaServicesFailed() {
@@ -50,6 +53,12 @@ RaClientApi.INSTANCE.bindRaConnectionService(this, ComponentName("com.softtanck.
         Log.d("~~~", "disconnectedFromRaServices: $disconnectedReason")
     }
 })
+
+    suspend fun suspendTestFun() {
+        val testInterface = RaClientApi.INSTANCE.create(RaTestInterface::class.java)
+        val suspendFun = testInterface.suspendFun()
+        Log.d("~~~", "suspendTestFun: done,$suspendFun")
+    }
 ```
 ### 服务端
 - 1. 继承```BaseConnectionService```
@@ -77,6 +86,7 @@ class RaConnectionService : BaseConnectionService(), RaTestInterface {
 - 推荐使用协程的方式调用，因为协程方式的默认内部走异步逻辑，某些情况性能更佳；
 - 非协程且方法带有返回值，默认走同步逻辑，调用在那个线程，任务就在那个线程执行；
 - 非协程且方法不带返回值，默认走异步逻辑，远程任务永远在子线程中运行 且 排队；
+- 服务端不需要实现suspend；（待讨论）
 ## 注意（参数或返回值为基本类型【包含String】**无需关心**）
 - 当参数是对象的时候，该对象必须实现Parcelable接口；
 - 当客户端期望的接口的返回值是对象的时候，该对象必须实现Parcelable接口；
