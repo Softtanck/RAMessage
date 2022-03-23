@@ -85,8 +85,10 @@ open class BaseClientHandler<T : Parcelable> : Handler {
                     is Messenger -> {
                         (outputMessenger as? Messenger)?.send(message.apply {
                             arg1 = safelyIncrement()
-                            synchronized(callbacks) { // Make sure it is thread-safely
-                                callbacks.put(arg1, WeakReference(raRemoteMessageListener))
+                            if (raRemoteMessageListener != null) {
+                                synchronized(callbacks) { // Make sure it is thread-safely
+                                    callbacks.put(arg1, WeakReference(raRemoteMessageListener))
+                                }
                             }
                         })
                     }

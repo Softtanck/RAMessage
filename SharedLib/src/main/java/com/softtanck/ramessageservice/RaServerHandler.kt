@@ -21,8 +21,8 @@ internal class RaServerHandler internal constructor(looper: Looper, private val 
         when (msg.what) {
             MESSAGE_REGISTER_CLIENT_REQ -> {
                 synchronized(clients) {
-                    // TODO : PID will be implemented in next release
-                    clients.add(RaClient(0, msg.replyTo))
+                    Log.d(TAG, "[SERVER] RaServerHandler handleMessage: MESSAGE_REGISTER_CLIENT_REQ, msg.sendingUid:${msg.sendingUid}")
+                    clients.add(RaClient(msg.sendingUid, msg.replyTo))
                     sendConnectionRegisterStateToClient(msg.replyTo)
                     Log.d(TAG, "[SERVER] Client is registered. No of active clients : ${clients.size}")
                 }
@@ -50,25 +50,33 @@ internal class RaServerHandler internal constructor(looper: Looper, private val 
             val iterator = clients.iterator()
             while (iterator.hasNext()) {
                 val client = iterator.next()
-                val clientBinder = client.clientMessenger.binder
-                if (clientBinder != null && clientBinder.isBinderAlive) {
-                    try {
-                        client.clientMessenger.send(Message.obtain(message).apply { what = MESSAGE_CLIENT_RSP })
-                    } catch (e: RemoteException) {
-                        iterator.remove()
-                        // The client is dead. Remove it from the list;
-                        Log.d(TAG, "[SERVER] Removing inactive client. New client count is " + clients.size)
-                    } catch (ex: Exception) {
-                        ex.printStackTrace()
-                        Log.e(TAG, "[SERVER] Send failed for client : $client")
+                Log.d(TAG, "[SERVER] sendMsgToClient: client.uid:${client.clientUID}")
+                // TODO : Need to check the pid if the client is running in the same process.
+                //  and send the message to the client only if the client is running in the same process.
+                //  Also, the request type of message needs to checked (Single point and broadcast) - TangCe
+                if (message.sendingUid == client.clientUID) {
+                    val clientBinder = client.clientMessenger.binder
+                    if (clientBinder != null && clientBinder.isBinderAlive) {
+                        try {
+                            client.clientMessenger.send(Message.obtain(message).apply { what = MESSAGE_CLIENT_RSP })
+                            if (BuildConfig.DEBUG) Log.d(TAG, "[SERVER] Sent response to msg($message) Clients")
+                        } catch (e: RemoteException) {
+                            iterator.remove()
+                            // The client is dead. Remove it from the list;
+                            Log.d(TAG, "[SERVER] Removing inactive client. New client count is " + clients.size)
+                        } catch (ex: Exception) {
+                            ex.printStackTrace()
+                            Log.e(TAG, "[SERVER] Send failed for client : $client")
+                            iterator.remove()
+                        }
+                    } else {
+                        Log.d(TAG, "[SERVER] Removing inactive client(Binder Died). New client count is " + clients.size)
                         iterator.remove()
                     }
                 } else {
-                    Log.d(TAG, "[SERVER] Removing inactive client(Binder Died). New client count is " + clients.size)
-                    iterator.remove()
+                    Log.d(TAG, "[SERVER] Current UID(${message.sendingUid}) not is ${client.clientUID}, Skip sending message to client")
                 }
             }
-            if (BuildConfig.DEBUG) Log.d(TAG, "[SERVER] Sent response to " + clients.size + " Clients")
         }
     }
 }

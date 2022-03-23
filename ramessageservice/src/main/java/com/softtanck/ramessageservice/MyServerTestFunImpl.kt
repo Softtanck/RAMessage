@@ -41,7 +41,7 @@ interface MyServerTestFunImpl : RaTestInterface {
     }
 
     override fun suspendFun(): Boolean {
-        Log.d("~~~", "[SERVER] suspendFun: Service is invoked")
+        Log.d("~~~", "[SERVER] suspendFun: Service is invoked, Thread:${Thread.currentThread()}")
         return true
     }
 }

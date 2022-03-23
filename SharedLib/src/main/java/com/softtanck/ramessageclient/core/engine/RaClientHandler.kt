@@ -59,7 +59,7 @@ class RaClientHandler : BaseClientHandler<Parcelable> {
             onBindStatusChanged(true)
         } else if (msg.what == MESSAGE_CLIENT_RSP) {
             Log.d(TAG, "[CLIENT] Received a new msg from server: $msg, trxID: ${msg.arg1}")
-            callbacks.get(msg.arg1).get()?.onMessageArrived(msg)
+            callbacks.get(msg.arg1)?.get()?.onMessageArrived(msg)
         }
     }
 
