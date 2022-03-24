@@ -23,6 +23,7 @@ abstract class BaseConnectionService : Service() {
     private val TAG: String = BaseConnectionService::class.java.simpleName
     private val workHandlerThread = HandlerThread(TAG)
 
+    // TODO : Add a interceptor chain for developers to add their own interceptors
     private val intercepts = mutableListOf<RaResponseIntercept>().apply {
         add(RaDefaultIntercept())
     }
@@ -34,7 +35,7 @@ abstract class BaseConnectionService : Service() {
 
     fun onRemoteMessageArrived(message: Message, isSyncCall: Boolean): Message? {
         Log.d(TAG, "[SERVER] onRemoteMessageArrived: $message, what:${message.what} isSyncCall:$isSyncCall, trxID:${message.arg1}")
-        val response = RealInterceptorChain(intercepts, intercepts.size - 1).proceed(message, isSyncCall)
+        val response = RealInterceptorChain(intercepts, 0, this@BaseConnectionService).proceed(message, isSyncCall)
         return if (isSyncCall) {
             response
         } else {

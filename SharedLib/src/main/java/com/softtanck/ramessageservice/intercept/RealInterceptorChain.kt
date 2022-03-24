@@ -1,6 +1,7 @@
 package com.softtanck.ramessageservice.intercept
 
 import android.os.Message
+import com.softtanck.ramessageservice.BaseConnectionService
 import com.softtanck.ramessageservice.model.RaChain
 
 /**
@@ -8,7 +9,7 @@ import com.softtanck.ramessageservice.model.RaChain
  * @date 2022/3/23
  * Description: TODO
  */
-class RealInterceptorChain(private val interceptors: List<RaResponseIntercept>, private val targetIndex: Int) : RaChain() {
+internal class RealInterceptorChain(private val interceptors: List<RaResponseIntercept>, private val targetIndex: Int, baseConnectionService: BaseConnectionService) : RaChain(baseConnectionService) {
     override fun proceed(message: Message, isSyncCall: Boolean): Message? {
         interceptors.size.let {
             if (targetIndex >= it) {
@@ -17,8 +18,7 @@ class RealInterceptorChain(private val interceptors: List<RaResponseIntercept>, 
                 return message
             }
             val interceptor = interceptors[targetIndex]
-            val tempIndex = targetIndex - 1
-            val realInterceptorChain = RealInterceptorChain(interceptors, tempIndex)
+            val realInterceptorChain = RealInterceptorChain(interceptors, targetIndex + 1, baseConnectionService)
             return interceptor.intercept(realInterceptorChain, message, isSyncCall)
         }
     }

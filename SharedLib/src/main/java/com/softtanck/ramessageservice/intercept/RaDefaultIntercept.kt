@@ -9,34 +9,33 @@ import com.softtanck.*
 import com.softtanck.model.RaRequestTypeArg
 import com.softtanck.model.RaRequestTypeParameter
 import com.softtanck.ramessageservice.model.RaChain
-import com.softtanck.ramessageservice.model.RaRemoteMethod
+import com.softtanck.ramessageservice.util.ServerUtil
 import java.lang.reflect.Method
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * @author Softtanck
  * @date 2022/3/23
  * Description: TODO
  */
-class RaDefaultIntercept : RaResponseIntercept {
+internal class RaDefaultIntercept : RaResponseIntercept {
     private val TAG: String = RaDefaultIntercept::class.java.simpleName
-    private val serviceMethodCache: MutableMap<String, RaRemoteMethod> = ConcurrentHashMap()
-
     override fun intercept(raChain: RaChain, message: Message, isSyncCall: Boolean): Message? {
         try {
             val serBundle: Bundle? = message.data?.apply { classLoader = this@RaDefaultIntercept.javaClass.classLoader }
             if (serBundle == null) {
                 return raChain.proceed(message, isSyncCall)
             } else {
-                val remoteName = serBundle.getString(MESSAGE_BUNDLE_METHOD_NAME_KEY)
-                if (TextUtils.isEmpty(remoteName)) return raChain.proceed(message, isSyncCall)
-                Log.d(TAG, "[SERVER] remoteMethodName:$remoteName")
+                val remoteMethodName = serBundle.getString(MESSAGE_BUNDLE_METHOD_NAME_KEY)
+                if (TextUtils.isEmpty(remoteMethodName)) return raChain.proceed(message, isSyncCall)
+                Log.d(TAG, "[SERVER] remoteMethodName:$remoteMethodName")
                 val requestParameters: ArrayList<RaRequestTypeParameter> = serBundle.getParcelableArrayList<RaRequestTypeParameter>(MESSAGE_BUNDLE_TYPE_PARAMETER_KEY) as ArrayList<RaRequestTypeParameter>
+                val loadServiceMethod = ServerUtil.loadServiceMethod(remoteMethodName!!, requestParameters, raChain.baseConnectionService)
                 val requestArgs: ArrayList<Parcelable> = serBundle.getParcelableArrayList<Parcelable>(MESSAGE_BUNDLE_TYPE_ARG_KEY) as ArrayList<Parcelable>
-                val remoteMethod: Method = this.javaClass.getDeclaredMethod(remoteName!!, *Array(requestParameters.size) { requestParameters[it].parameterTypeClasses })
-                remoteMethod.isAccessible = true
-                // TODO : Method mesh should be implemented
-                val remoteCallResult = remoteMethod.invoke(this, *Array(requestArgs.size) {
+                if (loadServiceMethod == null) {
+                    Log.e(TAG, "[SERVER] loadServiceMethod is null")
+                    return raChain.proceed(message, isSyncCall)
+                }
+                val remoteCallResult = loadServiceMethod.method.invoke(raChain.baseConnectionService, *Array(requestArgs.size) {
                     if (requestArgs[it] is RaRequestTypeArg) {
                         (requestArgs[it] as RaRequestTypeArg).arg
                     } else {
@@ -81,28 +80,6 @@ class RaDefaultIntercept : RaResponseIntercept {
             return null
         }
         return raChain.proceed(message, isSyncCall)
-    }
-
-    private fun loadServiceMethod(remoteMethodName: String, requestParameters: ArrayList<RaRequestTypeParameter>): RaRemoteMethod? {
-        var result = serviceMethodCache[remoteMethodName]
-        if (result != null && isEqual(requestParameters, result.methodRequestParams)) {
-            return result
-        }
-        synchronized(serviceMethodCache) {
-            result = serviceMethodCache[remoteMethodName]
-            if (result == null) {
-                result = RaRemoteMethod(remoteMethodName, requestParameters)
-                serviceMethodCache[remoteMethodName] = result!!
-            }
-        }
-        return result
-    }
-
-    private fun <T> isEqual(first: List<T>, second: List<T>): Boolean {
-        if (first.size != second.size) {
-            return false
-        }
-        return first.zip(second).all { (x, y) -> x == y }
     }
 
 }
