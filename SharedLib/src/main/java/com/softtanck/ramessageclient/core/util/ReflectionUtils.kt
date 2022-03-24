@@ -3,7 +3,7 @@ package com.softtanck.ramessageclient.core.util
 import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.MessageQueue
-import com.softtanck.ramessageservice.BaseServerSyncHandler
+import com.softtanck.ramessageservice.engine.BaseServerSyncHandler
 import java.lang.reflect.InvocationTargetException
 
 /**
