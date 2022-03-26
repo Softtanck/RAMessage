@@ -4,6 +4,7 @@ import android.os.*
 import android.util.Log
 import android.util.SparseArray
 import com.softtanck.model.RaCustomMessenger
+import com.softtanck.ramessage.IRaMessenger
 import com.softtanck.ramessageclient.core.listener.RaRemoteMessageListener
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicBoolean
@@ -14,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * @date 2022/3/12
  * Description: TODO
  */
-open class BaseClientHandler<T : Parcelable> : Handler {
+abstract class BaseClientHandler<T : Parcelable> : Handler {
     private val TAG: String = this.javaClass.simpleName
 
     constructor() : super()
@@ -47,7 +48,7 @@ open class BaseClientHandler<T : Parcelable> : Handler {
      * @param message the message
      * @return null or message from server
      */
-    protected fun sendMsgSync(message: Message): Message? = if (clientBoundStatus.get()) {
+    protected fun sendMsgSyncToServer(message: Message): Message? = if (clientBoundStatus.get()) {
         try {
             if (outputMessenger != null && outputMessenger is RaCustomMessenger) {
                 (outputMessenger as RaCustomMessenger).sendSync(message.apply {
@@ -70,7 +71,7 @@ open class BaseClientHandler<T : Parcelable> : Handler {
      * @param message the message
      * @param raRemoteMessageListener remote callback
      */
-    protected fun sendMsgAsync(message: Message, raRemoteMessageListener: RaRemoteMessageListener?) {
+    protected fun sendMsgAsyncToServer(message: Message, raRemoteMessageListener: RaRemoteMessageListener?) {
         if (clientBoundStatus.get()) {
             try {
                 when (outputMessenger) {
@@ -126,5 +127,21 @@ open class BaseClientHandler<T : Parcelable> : Handler {
 
         }
     }
+
+    class RaCustomClientMessengerImpl(private val handler: Handler) : IRaMessenger.Stub() {
+        override fun send(msg: Message) {
+            msg.sendingUid = getCallingUid()
+            handler.sendMessage(msg)
+        }
+
+        override fun sendSync(msg: Message): Message {
+            msg.sendingUid = getCallingUid()
+            // TODO : 服务器同步调用客户端未实现
+            return msg
+//            return baseConnectionService?.onRemoteMessageArrived(msg, true) ?: Message.obtain(msg)
+        }
+    }
+
+    abstract fun onRemoteMessageArrived(msg: Message, isSync: Boolean): Message?
 
 }

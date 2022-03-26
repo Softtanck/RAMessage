@@ -18,7 +18,7 @@ internal object ReflectionUtils {
      * @return the Binder object
      */
     @SuppressLint("DiscouragedPrivateApi")
-    fun getIMessengerFromSystem(targetHandler: BaseServerSyncHandler): Any? {
+    fun getIMessengerFromSystem(targetHandler: Handler): Any? {
         try {
             val getIMessengerMethod = Handler::class.java.getDeclaredMethod("getIMessenger")
             getIMessengerMethod.isAccessible = true
@@ -39,7 +39,7 @@ internal object ReflectionUtils {
      * @return MessageQueue
      */
     @SuppressLint("SoonBlockedPrivateApi")
-    fun getMessageQueueFromHandler(targetHandler: BaseServerSyncHandler?): MessageQueue? {
+    fun getMessageQueueFromHandler(targetHandler: Handler?): MessageQueue? {
         try {
             val mQueueField = Handler::class.java.getDeclaredField("mQueue")
             mQueueField.isAccessible = true
