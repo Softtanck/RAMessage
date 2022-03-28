@@ -48,7 +48,7 @@ abstract class BaseClientHandler<T : Parcelable> : Handler {
      * @param message the message
      * @return null or message from server
      */
-    protected fun sendMsgSyncToServer(message: Message): Message? = if (clientBoundStatus.get()) {
+    protected fun sendSyncMessageToServer(message: Message): Message? = if (clientBoundStatus.get()) {
         try {
             if (outputMessenger != null && outputMessenger is RaCustomMessenger) {
                 (outputMessenger as RaCustomMessenger).sendSync(message.apply {
@@ -71,7 +71,7 @@ abstract class BaseClientHandler<T : Parcelable> : Handler {
      * @param message the message
      * @param raRemoteMessageListener remote callback
      */
-    protected fun sendMsgAsyncToServer(message: Message, raRemoteMessageListener: RaRemoteMessageListener?) {
+    protected fun sendAsyncMessageToServer(message: Message, raRemoteMessageListener: RaRemoteMessageListener?) {
         if (clientBoundStatus.get()) {
             try {
                 when (outputMessenger) {

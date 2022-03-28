@@ -107,16 +107,16 @@ class RaClientHandler : BaseClientHandler<Parcelable> {
     }
 
     fun trySendDisconnectedToService() {
-        sendMsgSyncToServer(Message.obtain().apply { what = MESSAGE_CLIENT_DISCONNECT_REQ })
+        sendSyncMessageToServer(Message.obtain().apply { what = MESSAGE_CLIENT_DISCONNECT_REQ })
         // I think you are disconnected with service, So hardcode here.
         onBindStatusChanged(false, RA_DISCONNECTED_MANUAL)
     }
 
     fun sendMsgToServerAsync(message: Message, raRemoteMessageListener: RaRemoteMessageListener? = null) {
-        sendMsgAsyncToServer(message.apply { what = MESSAGE_CLIENT_REQ }, raRemoteMessageListener)
+        sendAsyncMessageToServer(message.apply { what = MESSAGE_CLIENT_REQ }, raRemoteMessageListener)
     }
 
-    fun sendMsgToServerSync(message: Message): Message? = sendMsgSyncToServer(message.apply { what = MESSAGE_CLIENT_REQ })
+    fun sendMsgToServerSync(message: Message): Message? = sendSyncMessageToServer(message.apply { what = MESSAGE_CLIENT_REQ })
 
     override fun onRemoteMessageArrived(msg: Message, isSync: Boolean): Message? {
         TODO("Not yet implemented")
