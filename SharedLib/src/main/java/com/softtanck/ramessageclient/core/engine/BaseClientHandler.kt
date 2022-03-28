@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * @date 2022/3/12
  * Description: TODO
  */
-abstract class BaseClientHandler<T : Parcelable> : Handler {
+internal abstract class BaseClientHandler<T : Parcelable> : Handler {
     private val TAG: String = this.javaClass.simpleName
 
     constructor() : super()
@@ -136,9 +136,11 @@ abstract class BaseClientHandler<T : Parcelable> : Handler {
 
         override fun sendSync(msg: Message): Message {
             msg.sendingUid = getCallingUid()
-            // TODO : 服务器同步调用客户端未实现
-            return msg
-//            return baseConnectionService?.onRemoteMessageArrived(msg, true) ?: Message.obtain(msg)
+            if (this.handler is RaClientHandler) {
+                return this.handler.onRemoteMessageArrived(msg, true) ?: return Message.obtain(msg)
+            } else {
+                throw IllegalArgumentException("Only the custom messenger can be used to send the sync message")
+            }
         }
     }
 

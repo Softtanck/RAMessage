@@ -19,7 +19,7 @@ import com.softtanck.ramessageclient.core.util.LockHelper
  * @date 2022/3/12
  * Description: TODO
  */
-class RaClientHandler : BaseClientHandler<Parcelable> {
+internal class RaClientHandler : BaseClientHandler<Parcelable> {
     constructor() : super()
     constructor(looper: Looper) : super(looper)
     constructor(looper: Looper, callback: Callback) : super(looper, callback)
