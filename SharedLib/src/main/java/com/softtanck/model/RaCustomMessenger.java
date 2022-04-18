@@ -1,7 +1,9 @@
 package com.softtanck.model;
 
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.MessageQueue;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.RemoteException;
@@ -10,11 +12,12 @@ import android.util.Pair;
 import androidx.annotation.Nullable;
 
 import com.softtanck.ramessage.IRaMessenger;
+import com.softtanck.ramessageclient.core.engine.BaseClientHandler;
+import com.softtanck.ramessageclient.core.util.ReflectionUtils;
 
 /**
  * Created by Softtanck on 2022/3/12
  * Copied from Android's SDK. ref: Messenger.java
- *
  */
 public class RaCustomMessenger implements Parcelable {
     /**
@@ -25,6 +28,22 @@ public class RaCustomMessenger implements Parcelable {
     public static final String RA_CLIENT_MESSENGER_KEY = "ra_client_messenger_key";
     public static final Pair<String, Integer> raMsgVersion = new Pair<>(RA_CLIENT_MESSENGER_KEY, RA_CLIENT_MESSENGER_VERSION);
     private final IRaMessenger mTarget;
+
+    public RaCustomMessenger(Handler target) throws IllegalAccessException {
+        MessageQueue messageQueueFromHandler = ReflectionUtils.INSTANCE.getMessageQueueFromHandler(target);
+        if (messageQueueFromHandler != null) {
+            synchronized (messageQueueFromHandler) {
+                mTarget = new BaseClientHandler.RaCustomClientMessengerImpl(target);
+            }
+        } else {
+            // Throw an exception if the target handler is not a client handler.
+            throw new IllegalAccessException("The target handler is not a client handler.");
+//            Object iMessengerFromSystem = ReflectionUtils.INSTANCE.getIMessengerFromSystem(target);
+//            if (iMessengerFromSystem != null) {
+//                mTarget = (IRaMessenger) iMessengerFromSystem;
+//            }
+        }
+    }
 
     /**
      * Send a Message to this Messenger's Handler.

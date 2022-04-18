@@ -6,16 +6,18 @@ import com.softtanck.MESSAGE_CLIENT_DISCONNECT_REQ
 import com.softtanck.MESSAGE_CLIENT_REQ
 import com.softtanck.MESSAGE_CLIENT_RSP
 import com.softtanck.MESSAGE_REGISTER_CLIENT_RSP
+import com.softtanck.model.RaCustomMessenger
 import com.softtanck.ramessageclient.core.RaServiceConnector
 import com.softtanck.ramessageclient.core.listener.*
 import com.softtanck.ramessageclient.core.util.LockHelper
+import com.softtanck.ramessageclient.core.util.ReflectionUtils
 
 /**
  * @author Softtanck
  * @date 2022/3/12
  * Description: TODO
  */
-class RaClientHandler : BaseClientHandler<Parcelable> {
+internal class RaClientHandler : BaseClientHandler<Parcelable> {
     constructor() : super()
     constructor(looper: Looper) : super(looper)
     constructor(looper: Looper, callback: Callback) : super(looper, callback)
@@ -23,7 +25,7 @@ class RaClientHandler : BaseClientHandler<Parcelable> {
     companion object {
         private val TAG: String = RaServiceConnector::class.java.simpleName
         private val workThreadHandler = HandlerThread(TAG)
-        private val inBoundMessenger: Messenger
+        private val inBoundMessenger: Parcelable
 
         @JvmStatic
         val INSTANCE: RaClientHandler by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
@@ -31,7 +33,17 @@ class RaClientHandler : BaseClientHandler<Parcelable> {
             if (!workThreadHandler.isAlive) workThreadHandler.start()
             // 2. Use the looper from above
             RaClientHandler(workThreadHandler.looper)
-        }.apply { inBoundMessenger = Messenger(this.value) } // 3. Remember create an inBoundMessenger
+        }.apply {
+            // 3. Remember create an inBoundMessenger
+            // But we need check the permission of the client, since the client may not have the permission to access the hidden API.
+            if (ReflectionUtils.getMessageQueueFromHandler(this.value) != null) {
+                inBoundMessenger = RaCustomMessenger(this.value)
+                Log.d(TAG, "[CLIENT] Good to go!")
+            } else {
+                inBoundMessenger = Messenger(this.value)
+                Log.e(TAG, "[CLIENT] Oops, The client has no permission to access the hidden API!!!")
+            }
+        }
     }
 
     /**
@@ -103,17 +115,21 @@ class RaClientHandler : BaseClientHandler<Parcelable> {
     }
 
     fun trySendDisconnectedToService() {
-        sendMsgSync(Message.obtain().apply {
-            what = MESSAGE_CLIENT_DISCONNECT_REQ
-
-        })
+        sendSyncMessageToServer(Message.obtain().apply { what = MESSAGE_CLIENT_DISCONNECT_REQ })
         // I think you are disconnected with service, So hardcode here.
         onBindStatusChanged(false, RA_DISCONNECTED_MANUAL)
     }
 
     fun sendMsgToServerAsync(message: Message, raRemoteMessageListener: RaRemoteMessageListener? = null) {
-        sendMsgAsync(message.apply { what = MESSAGE_CLIENT_REQ }, raRemoteMessageListener)
+        sendAsyncMessageToServer(message.apply { what = MESSAGE_CLIENT_REQ }, raRemoteMessageListener)
     }
 
-    fun sendMsgToServerSync(message: Message): Message? = sendMsgSync(message.apply { what = MESSAGE_CLIENT_REQ })
+    fun sendMsgToServerSync(message: Message): Message? = sendSyncMessageToServer(message.apply { what = MESSAGE_CLIENT_REQ })
+
+    override fun onRemoteMessageArrived(msg: Message, isSync: Boolean): Message? {
+        TODO("Not yet implemented")
+        // TODO : 跟服务端一样的实现。不过要反着来：
+        //  即： 服务端动态代理接口，然后获取参数类型、参数、函数名字后，通过IPC调用，把相关参数传递给客户端，客户端通过「反射」执行对应返回并同步返回；
+        //  那么异步情况如何处理？
+    }
 }

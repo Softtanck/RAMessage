@@ -2,20 +2,18 @@ package com.softtanck.ramessageservice.engine
 
 import android.os.Looper
 import android.os.Message
-import android.os.Messenger
+import android.os.Parcelable
 import android.os.RemoteException
 import android.util.Log
-import com.softtanck.MESSAGE_CLIENT_REQ
-import com.softtanck.MESSAGE_CLIENT_RSP
-import com.softtanck.MESSAGE_REGISTER_CLIENT_REQ
-import com.softtanck.MESSAGE_REGISTER_CLIENT_RSP
+import com.softtanck.*
 import com.softtanck.model.RaClient
+import com.softtanck.model.RaCustomMessenger
 import com.softtanck.ramessageservice.BaseConnectionService
 import com.softtanck.sharedlib.BuildConfig
 
 internal class RaServerHandler internal constructor(looper: Looper, private val baseConnectionService: BaseConnectionService) : BaseServerSyncHandler(looper, baseConnectionService) {
     private val TAG = this.javaClass.name
-    private val clients: LinkedHashSet<RaClient> = LinkedHashSet()
+    private val clients: LinkedHashSet<RaClient<Parcelable>> = LinkedHashSet()
 
     override fun handleMessage(msg: Message) {
         Log.d(TAG, "[SERVER] RaServerHandler handleMessage: ${msg.what}")
@@ -23,8 +21,10 @@ internal class RaServerHandler internal constructor(looper: Looper, private val 
             MESSAGE_REGISTER_CLIENT_REQ -> {
                 synchronized(clients) {
                     Log.d(TAG, "[SERVER] RaServerHandler handleMessage: MESSAGE_REGISTER_CLIENT_REQ, msg.sendingUid:${msg.sendingUid}")
-                    clients.add(RaClient(msg.sendingUid, msg.replyTo))
-                    sendConnectionRegisterStateToClient(msg.replyTo)
+                    val dataFromClient = msg.data.apply { classLoader = this@RaServerHandler.javaClass.classLoader }
+                    val tempRaClient = RaClient(msg.sendingUid, dataFromClient.getParcelable<Parcelable>(MESSAGE_BUNDLE_REPLY_TO_KEY) as? RaCustomMessenger ?: msg.replyTo)
+                    clients.add(tempRaClient)
+                    sendConnectionRegisterStateToClient(tempRaClient)
                     Log.d(TAG, "[SERVER] Client is registered. No of active clients : ${clients.size}")
                 }
             }
@@ -37,10 +37,9 @@ internal class RaServerHandler internal constructor(looper: Looper, private val 
         }
     }
 
-    private fun sendConnectionRegisterStateToClient(client: Messenger) {
+    private fun sendConnectionRegisterStateToClient(raClient: RaClient<Parcelable>) {
         try {
-            val registerStateMessage: Message = Message.obtain(null, MESSAGE_REGISTER_CLIENT_RSP)
-            client.send(registerStateMessage)
+            raClient.sendAsyncMessageToClient(Message.obtain(null, MESSAGE_REGISTER_CLIENT_RSP))
         } catch (e: Exception) {
             Log.e(TAG, "[SERVER] Exception occurs when send register state to client state: " + e.message, e)
         }
@@ -56,10 +55,10 @@ internal class RaServerHandler internal constructor(looper: Looper, private val 
                 //  and send the message to the client only if the client is running in the same process.
                 //  Also, the request type of message needs to checked (Single point and broadcast) - TangCe
                 if (message.sendingUid == client.clientUID) {
-                    val clientBinder = client.clientMessenger.binder
+                    val clientBinder = client.getClientBinder()
                     if (clientBinder != null && clientBinder.isBinderAlive) {
                         try {
-                            client.clientMessenger.send(Message.obtain(message).apply { what = MESSAGE_CLIENT_RSP })
+                            client.sendAsyncMessageToClient(Message.obtain(message).apply { what = MESSAGE_CLIENT_RSP })
                             if (BuildConfig.DEBUG) Log.d(TAG, "[SERVER] Sent response to msg($message) Clients")
                         } catch (e: RemoteException) {
                             iterator.remove()

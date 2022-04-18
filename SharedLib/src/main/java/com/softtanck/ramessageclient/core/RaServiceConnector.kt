@@ -2,11 +2,9 @@ package com.softtanck.ramessageclient.core
 
 import android.content.ComponentName
 import android.content.Context
-import android.os.IBinder
-import android.os.Message
-import android.os.Messenger
-import android.os.Parcelable
+import android.os.*
 import android.util.Log
+import com.softtanck.MESSAGE_BUNDLE_REPLY_TO_KEY
 import com.softtanck.MESSAGE_REGISTER_CLIENT_REQ
 import com.softtanck.model.RaCustomMessenger
 import com.softtanck.ramessageclient.core.engine.RaClientHandler
@@ -35,16 +33,20 @@ internal class RaServiceConnector(context: Context) : BaseServiceConnection<Parc
             RaClientHandler.INSTANCE.setOutBoundMessenger(outBoundMessenger)
             when (outBoundMessenger) {
                 is RaCustomMessenger -> {
-                    Log.d(TAG, "[CLIENT] Use the custom messenger, now")
+                    Log.d(TAG, "[CLIENT] Saved the custom messenger from server, now")
                     (outBoundMessenger as RaCustomMessenger).send(Message.obtain(null, MESSAGE_REGISTER_CLIENT_REQ).apply {
-                        replyTo = RaClientHandler.INSTANCE.getInBoundMessenger()
+                        data = Bundle().apply {
+                            putParcelable(MESSAGE_BUNDLE_REPLY_TO_KEY, RaClientHandler.INSTANCE.getInBoundMessenger())
+                        }
                     })
                 }
                 is Messenger -> {
                     Log.w(TAG, "[CLIENT] Use the default messenger")
-                    (outBoundMessenger as Messenger).send(Message.obtain(null, MESSAGE_REGISTER_CLIENT_REQ).apply {
-                        replyTo = RaClientHandler.INSTANCE.getInBoundMessenger()
-                    })
+                    throw IllegalStateException("The default messenger is not supported")
+                    // TODO : Default messenger is not supported
+//                    (outBoundMessenger as Messenger).send(Message.obtain(null, MESSAGE_REGISTER_CLIENT_REQ).apply {
+//                        replyTo = RaClientHandler.INSTANCE.getInBoundMessenger()
+//                    })
                 }
                 else -> {
                     Log.e(TAG, "[CLIENT] Failed to send msg to server, Since outBoundMessenger type is unknown")

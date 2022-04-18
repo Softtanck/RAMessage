@@ -14,7 +14,7 @@ const val MESSAGE_CLIENT_DISCONNECT_REQ = MESSAGE_BASE_KEY + 3
 const val MESSAGE_CLIENT_REQ = MESSAGE_BASE_KEY + 4
 const val MESSAGE_CLIENT_RSP = MESSAGE_BASE_KEY + 5
 
-
+const val MESSAGE_BUNDLE_REPLY_TO_KEY = "message_bundle_reply_to_key"
 const val MESSAGE_BUNDLE_METHOD_NAME_KEY = "message_bundle_method_name_key"
 const val MESSAGE_BUNDLE_NORMAL_RSP_KEY = "message_bundle_rsp_key"
 const val MESSAGE_BUNDLE_RSP_TYPE_KEY = "message_bundle_rsp_type_key"
