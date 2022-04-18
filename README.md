@@ -1,5 +1,5 @@
 # 🔥🔥🔥一个类似Retrofit的IPC通信框架，支持Java、Kotlin以及同步调用、异步调用、协程
-一个高可用、高维护、高性能、线程安全的IPC通信框架。（Android全平台支持，仅98kb）
+一个高可用、高维护、高性能、线程安全的IPC通信框架。（Android全平台支持，仅98kb）![RUNOOB 图标](https://jitpack.io/v/Softtanck/RAMessage.svg)
 - Kotlin 👍
 - Java 👍
 - Android 4 - Android 12+ 👍
@@ -14,6 +14,9 @@
 - 异常机制 （WIP）
 - 混淆（WIP）
 ## 如何使用
+```kotlin
+implementation 'com.github.Softtanck:RAMessage:0.0.1'
+```
 ### 客户端
 - 1. 先在客户端定义想要IPC的接口；
 ```kotlin
