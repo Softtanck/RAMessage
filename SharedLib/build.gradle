@@ -2,15 +2,15 @@ plugins {
     id 'com.android.library'
     id 'kotlin-parcelize'
     id 'kotlin-android'
+    id 'maven-publish'
 }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
+    compileSdkVersion 32
 
     defaultConfig {
         minSdkVersion 23
-        targetSdkVersion 30
+        targetSdkVersion 32
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -31,7 +31,21 @@ android {
     }
 }
 
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                from components.release
+                groupId = 'com.softtanck.ramessage'
+                artifactId = 'RaMessage'
+                version = '0.0.1'
+            }
+        }
+    }
+}
+
 dependencies {
     implementation 'androidx.core:core-ktx:1.7.0'
-    api "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0"
+    api "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1"
 }
