@@ -1,9 +1,6 @@
 package com.softtanck.ramessageclient.core.engine
 
-import android.os.HandlerThread
-import android.os.Looper
-import android.os.Message
-import android.os.Parcelable
+import android.os.*
 import android.util.Log
 import com.softtanck.MESSAGE_CLIENT_DISCONNECT_REQ
 import com.softtanck.MESSAGE_CLIENT_REQ
@@ -13,6 +10,7 @@ import com.softtanck.model.RaCustomMessenger
 import com.softtanck.ramessageclient.core.RaServiceConnector
 import com.softtanck.ramessageclient.core.listener.*
 import com.softtanck.ramessageclient.core.util.LockHelper
+import com.softtanck.ramessageclient.core.util.ReflectionUtils
 
 /**
  * @author Softtanck
@@ -27,7 +25,7 @@ internal class RaClientHandler : BaseClientHandler<Parcelable> {
     companion object {
         private val TAG: String = RaServiceConnector::class.java.simpleName
         private val workThreadHandler = HandlerThread(TAG)
-        private val inBoundMessenger: RaCustomMessenger
+        private val inBoundMessenger: Parcelable
 
         @JvmStatic
         val INSTANCE: RaClientHandler by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
@@ -35,7 +33,17 @@ internal class RaClientHandler : BaseClientHandler<Parcelable> {
             if (!workThreadHandler.isAlive) workThreadHandler.start()
             // 2. Use the looper from above
             RaClientHandler(workThreadHandler.looper)
-        }.apply { inBoundMessenger = RaCustomMessenger(this.value) } // 3. Remember create an inBoundMessenger
+        }.apply {
+            // 3. Remember create an inBoundMessenger
+            // But we need check the permission of the client, since the client may not have the permission to access the hidden API.
+            if (ReflectionUtils.getMessageQueueFromHandler(this.value) != null) {
+                inBoundMessenger = RaCustomMessenger(this.value)
+                Log.d(TAG, "[CLIENT] Good to go!")
+            } else {
+                inBoundMessenger = Messenger(this.value)
+                Log.e(TAG, "[CLIENT] Oops, The client has no permission to access the hidden API!!!")
+            }
+        }
     }
 
     /**
