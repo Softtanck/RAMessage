@@ -109,6 +109,8 @@ class RaConnectionService : BaseConnectionService(), RaTestInterface {
 - 接口如果有返回值，但是如果远程调用失败，返回值为空，请注意「**空指针**」异常；
 例如：
 该接口```fun testReturnAModel(testString: String, testNumber: Int): RaTestModel```中的```RaTestModel```需要实现Parcelable，且服务端和客户端都需要定义**相同包名**的类；
+# 交流群：
+![Wecaht](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1dee003a17ba4277867c23eec5d9609a~tplv-k3u1fbpfcp-watermark.image?)    
 # Licence
 ```
 Copyright 2022 Softtanck.
