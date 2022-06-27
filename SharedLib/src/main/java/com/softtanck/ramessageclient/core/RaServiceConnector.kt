@@ -44,11 +44,9 @@ internal class RaServiceConnector(context: Context) : BaseServiceConnection<Parc
                 }
                 is Messenger -> {
                     Log.w(TAG, "[CLIENT] Use the default messenger")
-                    throw IllegalStateException("The default messenger is not supported")
-                    // TODO : Default messenger is not supported
-//                    (outBoundMessenger as Messenger).send(Message.obtain(null, MESSAGE_REGISTER_CLIENT_REQ).apply {
-//                        replyTo = RaClientHandler.INSTANCE.getInBoundMessenger()
-//                    })
+                    (outBoundMessenger as Messenger).send(Message.obtain(null, MESSAGE_REGISTER_CLIENT_REQ).apply {
+                        replyTo = RaClientHandler.INSTANCE.getInBoundMessenger() as Messenger
+                    })
                 }
                 else -> {
                     Log.e(TAG, "[CLIENT] Failed to send msg to server, Since outBoundMessenger type is unknown")
