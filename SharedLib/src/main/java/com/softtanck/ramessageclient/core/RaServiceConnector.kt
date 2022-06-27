@@ -35,6 +35,8 @@ internal class RaServiceConnector(context: Context) : BaseServiceConnection<Parc
                 is RaCustomMessenger -> {
                     Log.d(TAG, "[CLIENT] Saved the custom messenger from server, now")
                     (outBoundMessenger as RaCustomMessenger).send(Message.obtain(null, MESSAGE_REGISTER_CLIENT_REQ).apply {
+                        // replyTo InBoundMessenger as Messenger if the client is failed to reflect the messenger.
+                        replyTo = RaClientHandler.INSTANCE.getInBoundMessenger() as Messenger
                         data = Bundle().apply {
                             putParcelable(MESSAGE_BUNDLE_REPLY_TO_KEY, RaClientHandler.INSTANCE.getInBoundMessenger())
                         }
