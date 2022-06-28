@@ -18,18 +18,32 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @date 2022/3/12
  * Description: TODO
  */
-abstract class BaseServiceConnection<T : Parcelable>(private val context: Context) : ServiceConnection {
+abstract class BaseServiceConnection<T : Parcelable>(val context: Context) : ServiceConnection {
     private val TAG: String = this.javaClass.simpleName
 
     protected var outBoundMessenger: T? = null
 
-    // Current bind is in progress
+    // The unbind is triggered by manual, Like [unbindRaConnectionService]
+    // This flag is for reconnect the service if the IBinder died from server.
+    private val isUnbindTriggeredByManual = AtomicBoolean(false)
+
+    // Current bind is in progress, default is false.
     private val bindInProgress = AtomicBoolean(false)
 
     private fun makeBindInProgressUseCAS(isInProgress: Boolean) {
         // Make sure the bind is changed success!!!
         @Suppress("ControlFlowWithEmptyBody")
         while (!bindInProgress.compareAndSet(bindInProgress.get(), isInProgress));
+    }
+
+    private fun makeIsUnbindTriggeredByManualUseCAS(unbindTriggeredByManual: Boolean) {
+        // Make sure the unbind is changed success!!!
+        @Suppress("ControlFlowWithEmptyBody")
+        while (!isUnbindTriggeredByManual.compareAndSet(isUnbindTriggeredByManual.get(), unbindTriggeredByManual));
+    }
+
+    fun isUnbindTriggeredByManual(): Boolean {
+        return isUnbindTriggeredByManual.get()
     }
 
     /**
@@ -85,13 +99,14 @@ abstract class BaseServiceConnection<T : Parcelable>(private val context: Contex
                     Log.w(TAG, "[CLIENT] Looks you are missing the permission, ${e.message}")
                 } finally {
                     Log.d(TAG, "[CLIENT] Binding Api results:$bindServiceResult, Thread:${Thread.currentThread()}")
+                    makeBindInProgressUseCAS(false)
+                    makeIsUnbindTriggeredByManualUseCAS(false)
                     if (!bindServiceResult) { // Callback the result to user if the action is failed to execute
                         // Use the iterator to avoid CME!!!
                         val iterator = BindStateListenerManager.INSTANCE.getAllListener().iterator()
                         while (iterator.hasNext()) {
                             iterator.next().onConnectRaServicesFailed()
                         }
-                        makeBindInProgressUseCAS(false)
                     }
                 }
             }
@@ -102,6 +117,7 @@ abstract class BaseServiceConnection<T : Parcelable>(private val context: Contex
      * Unbind the remove service
      */
     fun unbindRaConnectionService() {
+        // Check current status with bound.
         if (RaClientHandler.INSTANCE.clientIsBoundStatus()) {
             synchronized(LockHelper.BIND_RESULT_OBJ_LOCK) {
                 if (RaClientHandler.INSTANCE.clientIsBoundStatus()) {
@@ -113,6 +129,8 @@ abstract class BaseServiceConnection<T : Parcelable>(private val context: Contex
                     RaClientHandler.INSTANCE.setOutBoundMessenger(null)
                     // 3. Last, unbind the service
                     context.unbindService(this)
+                    // 4. mark the flag as true
+                    makeIsUnbindTriggeredByManualUseCAS(true)
                 } else {
                     Log.w(TAG, "[CLIENT] Already in unbinding, Ignore this request, Thread: ${Thread.currentThread()}")
                 }

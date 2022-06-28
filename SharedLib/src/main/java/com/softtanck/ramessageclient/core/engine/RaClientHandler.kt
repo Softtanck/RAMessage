@@ -114,8 +114,23 @@ internal class RaClientHandler : BaseClientHandler<Parcelable> {
         }
     }
 
+    /**
+     * Send a message to service with compat.
+     * Since the client maybe not have the permission to access the hidden API, we need to use the compat.
+     * if the client has the permission, we can use the normal way to send message.
+     * Note: Currently, This method only for disconnection.
+     * @param message the message to send
+     */
+    private fun sendMsgToServiceCompat(message: Message) {
+        if (outputMessenger != null && outputMessenger is RaCustomMessenger) {
+            sendSyncMessageToServer(message)
+        } else {
+            sendMsgToServerAsync(message)
+        }
+    }
+
     fun trySendDisconnectedToService() {
-        sendSyncMessageToServer(Message.obtain().apply { what = MESSAGE_CLIENT_DISCONNECT_REQ })
+        sendMsgToServiceCompat(Message.obtain().apply { what = MESSAGE_CLIENT_DISCONNECT_REQ })
         // I think you are disconnected with service, So hardcode here.
         onBindStatusChanged(false, RA_DISCONNECTED_MANUAL)
     }
