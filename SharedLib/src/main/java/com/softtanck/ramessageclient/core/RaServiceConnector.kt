@@ -7,6 +7,7 @@ import android.util.Log
 import com.softtanck.MESSAGE_BUNDLE_REPLY_TO_KEY
 import com.softtanck.MESSAGE_REGISTER_CLIENT_REQ
 import com.softtanck.model.RaCustomMessenger
+import com.softtanck.ramessageclient.RaClientApi
 import com.softtanck.ramessageclient.core.engine.RaClientHandler
 
 /**
@@ -63,7 +64,14 @@ internal class RaServiceConnector(context: Context) : BaseServiceConnection<Parc
     }
 
     override fun onBindingDied(name: ComponentName) {
-        Log.w(TAG, "[CLIENT] onBindingDied : $name")
+        val unbindTriggeredByManual = isUnbindTriggeredByManual()
+        Log.w(TAG, "[CLIENT] onBindingDied : $name, unbindTriggeredByManual:$unbindTriggeredByManual")
+        if (!unbindTriggeredByManual) { // Retry logic is performed only the connection disconnected from the system.
+            unbindRaConnectionService()
+            // Looks like the server is dead, so we should try to reconnect.
+            // TODO : Delay should be added?
+            RaClientApi.INSTANCE.bindRaConnectionService(context, name)
+        }
     }
 
     override fun onNullBinding(name: ComponentName) {
