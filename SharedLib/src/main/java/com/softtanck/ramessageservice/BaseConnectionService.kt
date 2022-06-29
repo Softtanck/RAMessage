@@ -18,8 +18,9 @@ import com.softtanck.ramessageservice.intercept.RealInterceptorChain
  * @author Softtanck
  * @date 2022/3/12
  * Description: TODO
+ * @param startInForeground is start in foreground, that is, show a notification
  */
-abstract class BaseConnectionService : Service() {
+abstract class BaseConnectionService(private val startInForeground: Boolean = true) : Service() {
     private val TAG: String = BaseConnectionService::class.java.simpleName
     private val workHandlerThread = HandlerThread(TAG)
 
@@ -51,7 +52,9 @@ abstract class BaseConnectionService : Service() {
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "[SERVER] onCreate")
-        startForeground(RaNotification.BASE_CONNECTION_SERVICE_NOTIFICATION_ID, RaNotification.getNotificationForInitSetup(this))
+        if (startInForeground) { // if start in foreground, show a notification
+            startForeground(RaNotification.BASE_CONNECTION_SERVICE_NOTIFICATION_ID, RaNotification.getNotificationForInitSetup(this))
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

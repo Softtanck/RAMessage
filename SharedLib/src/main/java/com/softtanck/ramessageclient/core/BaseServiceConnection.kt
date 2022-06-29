@@ -131,6 +131,7 @@ abstract class BaseServiceConnection<T : Parcelable>(val context: Context) : Ser
                     context.unbindService(this)
                     // 4. mark the flag as true
                     makeIsUnbindTriggeredByManualUseCAS(true)
+                    Log.d(TAG, "unbindRaConnectionService: done")
                 } else {
                     Log.w(TAG, "[CLIENT] Already in unbinding, Ignore this request, Thread: ${Thread.currentThread()}")
                 }
