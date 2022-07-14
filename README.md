@@ -2,7 +2,7 @@
 一个高可用、高维护、高性能、线程安全的IPC通信框架。（Android全平台支持，仅98kb）![RUNOOB 图标](https://jitpack.io/v/Softtanck/RAMessage.svg)
 - Kotlin 👍
 - Java 👍
-- Android 4 - Android 12+ 👍
+- Android 4+ 👍
 - 同步调用 👍
 - 异步调用 👍
 - 线程安全 👍 
@@ -10,9 +10,10 @@
 - 双向发送和实现（目前只支持客户端给服务端发送和接受：同步、异步；服务端给客户端发送：异步、同步暂不支持，新的分支在处理，目前变通方案：客户端作为服务端。WIP）
 - 协程 👍
 - 支持接口参数、返回参数为：基本类型或实现了Parcelable或List<out Parcelable> 👍
+- 客户端连接异常断开自动重连 👍
 - 提醒消息 （WIP）  
 - 异常机制 （WIP）
-- 混淆（WIP）
+- 混淆 👍
 ## 如何使用
 ```kotlin
 implementation 'com.github.Softtanck:RAMessage:0.0.1'
@@ -108,7 +109,35 @@ class RaConnectionService : BaseConnectionService(), RaTestInterface {
 - 当客户端期望的接口的返回值是对象的时候，该对象必须实现Parcelable接口；
 - 接口如果有返回值，但是如果远程调用失败，返回值为空，请注意「**空指针**」异常；
 例如：
-该接口```fun testReturnAModel(testString: String, testNumber: Int): RaTestModel```中的```RaTestModel```需要实现Parcelable，且服务端和客户端都需要定义**相同包名**的类；  
+该接口```fun testReturnAModel(testString: String, testNumber: Int): RaTestModel```中的```RaTestModel```需要实现Parcelable，且服务端和客户端都需要定义**相同包名**的类；
+
+# 混淆
+```
+-keepattributes Signature, InnerClasses, EnclosingMethod
+-keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+-keepattributes AnnotationDefault
+
+# Ignore JSR 305 annotations for embedding nullability information.
+-dontwarn javax.annotation.**
+
+# Guarded by a NoClassDefFoundError try/catch and only used when on the classpath.
+-dontwarn kotlin.Unit
+
+# With R8 full mode generic signatures are stripped for classes that are not
+# kept. Suspend functions are wrapped in continuations where the type argument
+# is used.
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
+
+-keep class com.softtanck.model.** { *; }
+-keep class com.softtanck.ramessageclient.YxClientApi { *; }
+-keep class com.softtanck.ramessageclient.YxClientApi$Companion { *; }
+-keep class com.softtanck.ramessageclient.core.listener.** { *; }
+-keepclassmembers class * implements android.os.Parcelable {
+  public static final android.os.Parcelable$Creator CREATOR;
+}
+-keep class * extends com.softtanck.ramessageservice.BaseConnectionService { *; }
+# 还需要keep你的接口实现类
+```
 # Licence
 ```
 Copyright 2022 Softtanck.

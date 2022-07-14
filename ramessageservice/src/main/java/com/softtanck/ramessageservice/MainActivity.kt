@@ -12,6 +12,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        ContextCompat.startForegroundService(this, Intent(this, RaConnectionService::class.java))
+        val intent = Intent(this, RaConnectionService::class.java)
+        startService(intent)
+//        ContextCompat.startForegroundService(this, intent)
     }
 }

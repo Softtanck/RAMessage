@@ -7,6 +7,6 @@ package com.softtanck.ramessageservice
  * 1. Implementing the interface from client
  * 2. And override the fun
  */
-class RaConnectionService : BaseConnectionService(), MyServerTestFunImpl {
+class RaConnectionService : BaseConnectionService(false), MyServerTestFunImpl {
 
 }

@@ -10,6 +10,7 @@ import com.softtanck.ramessageclient.core.listener.BindStateListener
 import com.softtanck.ramessageclient.core.listener.DisconnectedReason
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlin.system.exitProcess
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,8 +18,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
     }
 
-    override fun onResume() {
-        super.onResume()
+    private fun bind() {
         RaClientApi.INSTANCE.bindRaConnectionService(this, ComponentName("com.softtanck.ramessageservice", "com.softtanck.ramessageservice.RaConnectionService"), object : BindStateListener {
             override fun onConnectedToRaServices() {
                 Log.d("~~~", "connectedToRaServices: $this")
@@ -28,10 +28,10 @@ class MainActivity : AppCompatActivity() {
 //                val testReturnAllList = testInterface.testReturnAllList("I am from the caller")
 //                Log.d("~~~", "testReturnAllList:$testReturnAllList")
 //                testInterface.testVoid()
-                val testBoolean = testInterface.testBoolean()
-                Log.d("~~~", "testBoolean: $testBoolean")
-                val testString = testInterface.testString()
-                Log.d("~~~", "testString: $testString")
+//                val testBoolean = testInterface.testBoolean()
+//                Log.d("~~~", "testBoolean: $testBoolean")
+//                val testString = testInterface.testString()
+//                Log.d("~~~", "testString: $testString")
                 GlobalScope.launch {
                     suspendTestFun()
                 }
@@ -39,10 +39,12 @@ class MainActivity : AppCompatActivity() {
 
             override fun onConnectRaServicesFailed() {
                 Log.d("~~~", "onConnectRaServicesFailed: ")
+//                bind()
             }
 
             override fun onDisconnectedFromRaServices(@DisconnectedReason disconnectedReason: Int) {
                 Log.d("~~~", "disconnectedFromRaServices: $disconnectedReason")
+//                bind()
             }
         })
     }
@@ -51,5 +53,20 @@ class MainActivity : AppCompatActivity() {
         val testInterface = RaClientApi.INSTANCE.create(RaTestInterface::class.java)
         val suspendFun = testInterface.suspendFun()
         Log.d("~~~", "suspendTestFun: done,$suspendFun")
+//        RaClientApi.INSTANCE.unbindRaConnectionService()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        RaClientApi.INSTANCE.addRemoteBroadcastMessageListener { msg ->
+            Log.d("~~~", "onResume broadcast: $msg")
+        }
+        bind()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        RaClientApi.INSTANCE.unbindRaConnectionService()
+        exitProcess(0)
     }
 }

@@ -2,12 +2,8 @@ package com.softtanck.ramessageclient.core.engine
 
 import android.os.*
 import android.util.Log
-import com.softtanck.MESSAGE_CLIENT_DISCONNECT_REQ
-import com.softtanck.MESSAGE_CLIENT_REQ
-import com.softtanck.MESSAGE_CLIENT_RSP
-import com.softtanck.MESSAGE_REGISTER_CLIENT_RSP
+import com.softtanck.*
 import com.softtanck.model.RaCustomMessenger
-import com.softtanck.ramessageclient.core.RaServiceConnector
 import com.softtanck.ramessageclient.core.listener.*
 import com.softtanck.ramessageclient.core.util.LockHelper
 import com.softtanck.ramessageclient.core.util.ReflectionUtils
@@ -23,7 +19,7 @@ internal class RaClientHandler : BaseClientHandler<Parcelable> {
     constructor(looper: Looper, callback: Callback) : super(looper, callback)
 
     companion object {
-        private val TAG: String = RaServiceConnector::class.java.simpleName
+        private val TAG: String = RaClientHandler::class.java.simpleName
         private val workThreadHandler = HandlerThread(TAG)
         private val inBoundMessenger: Parcelable
 
@@ -67,15 +63,35 @@ internal class RaClientHandler : BaseClientHandler<Parcelable> {
 
     override fun handleMessage(msg: Message) {
         Log.d(TAG, "[CLIENT] RaClientHandler handleMessage: ${msg.what}")
-        if (msg.what == MESSAGE_REGISTER_CLIENT_RSP) {
-            onBindStatusChanged(true)
-        } else if (msg.what == MESSAGE_CLIENT_RSP) {
-            Log.d(TAG, "[CLIENT] Received a new msg from server: $msg, trxID: ${msg.arg1}")
-            callbacks.get(msg.arg1)?.get()?.onMessageArrived(msg)
+        when (msg.what) {
+            MESSAGE_REGISTER_CLIENT_RSP -> {
+                onBindStatusChanged(true)
+            }
+            MESSAGE_CLIENT_SINGLE_RSP -> {
+                Log.d(TAG, "[CLIENT] Received a new msg from server: $msg, trxID: ${msg.arg1}")
+                singleCallbacks.get(msg.arg1)?.run {
+                    // 1. first is the callback needs to be called
+                    get()?.onMessageArrived(msg)
+                    // 2. then remove the callback from the map
+                    clear()
+                }
+                // 3. finally, remove the trxID from the map
+                synchronized(singleCallbacks) {
+                    singleCallbacks.remove(msg.arg1)
+                }
+            }
+            MESSAGE_CLIENT_BROADCAST_RSP -> {
+                Log.d(TAG, "[CLIENT] Received a new msg(broadcast) from server: $msg")
+                broadcastCallbacks.forEachIndexed { _, callback ->
+                    // 1. first is the callback needs to be called
+                    callback.get()?.onMessageArrived(msg)
+                }
+            }
         }
     }
 
     fun onBindStatusChanged(isConnected: Boolean, @DisconnectedReason disconnectedReason: Int = RA_DISCONNECTED_ABNORMAL) {
+        Log.d(TAG, "[CLIENT] onBindStatusChanged: $isConnected, $disconnectedReason")
         if (isConnected) {
             if (!clientBoundStatus.get()) {
                 synchronized(LockHelper.BIND_RESULT_OBJ_LOCK) {
@@ -107,6 +123,13 @@ internal class RaClientHandler : BaseClientHandler<Parcelable> {
                     } else {
                         Log.w(TAG, "[CLIENT] Already scheduled, Ignore this request, isConnected: $isConnected, Thread:${Thread.currentThread()}")
                     }
+                    // finally, clear the singleCallbacks and broadcastCallbacks
+                    synchronized(singleCallbacks) {
+                        singleCallbacks.clear()
+                    }
+                    synchronized(broadcastCallbacks) {
+                        broadcastCallbacks.clear()
+                    }
                 }
             } else {
                 makeClientBoundStatusUseCAS(false)
@@ -136,10 +159,10 @@ internal class RaClientHandler : BaseClientHandler<Parcelable> {
     }
 
     fun sendMsgToServerAsync(message: Message, raRemoteMessageListener: RaRemoteMessageListener? = null) {
-        sendAsyncMessageToServer(message.apply { what = MESSAGE_CLIENT_REQ }, raRemoteMessageListener)
+        sendAsyncMessageToServer(message.apply { what = MESSAGE_CLIENT_SINGLE_REQ }, raRemoteMessageListener)
     }
 
-    fun sendMsgToServerSync(message: Message): Message? = sendSyncMessageToServer(message.apply { what = MESSAGE_CLIENT_REQ })
+    fun sendMsgToServerSync(message: Message): Message? = sendSyncMessageToServer(message.apply { what = MESSAGE_CLIENT_SINGLE_REQ })
 
     override fun onRemoteMessageArrived(msg: Message, isSync: Boolean): Message? {
         TODO("Not yet implemented")
