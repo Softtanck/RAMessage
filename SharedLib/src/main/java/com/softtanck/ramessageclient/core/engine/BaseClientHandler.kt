@@ -41,7 +41,41 @@ internal abstract class BaseClientHandler<T : Parcelable> : Handler {
      * Remember all callbacks from the client. And WeakReference is used as value.
      * That can be void memory leaks here.
      */
-    protected val callbacks: SparseArray<WeakReference<RaRemoteMessageListener>> = SparseArray<WeakReference<RaRemoteMessageListener>>()
+    protected val singleCallbacks: SparseArray<WeakReference<RaRemoteMessageListener>> = SparseArray<WeakReference<RaRemoteMessageListener>>()
+
+    /**
+     * Remember all callbacks from the client. And WeakReference is used as value.
+     * That can be void memory leaks here.
+     */
+    protected val broadcastCallbacks = mutableListOf<WeakReference<RaRemoteMessageListener>>()
+
+    /**
+     * Add a broadcast callback to the list.
+     * @param remoteMessageListener The callback to be added.
+     */
+    fun addRemoteBroadCastMessageCallback(remoteMessageListener: RaRemoteMessageListener) {
+        synchronized(broadcastCallbacks) {
+            broadcastCallbacks.add(WeakReference(remoteMessageListener))
+        }
+    }
+
+    /**
+     * Remove a broadcast callback from the list.
+     */
+    fun removeRemoteBroadCastMessageCallback(remoteMessageListener: RaRemoteMessageListener) {
+        synchronized(broadcastCallbacks) {
+            broadcastCallbacks.removeAll { it.get() == remoteMessageListener }
+        }
+    }
+
+    /**
+     * Clear all broadcast callbacks.
+     */
+    fun clearRemoteBroadCastMessageCallbacks() {
+        synchronized(broadcastCallbacks) {
+            broadcastCallbacks.clear()
+        }
+    }
 
     /**
      * Send a message to server with sync
@@ -78,8 +112,8 @@ internal abstract class BaseClientHandler<T : Parcelable> : Handler {
                     is RaCustomMessenger -> {
                         (outputMessenger as? RaCustomMessenger)?.send(message.apply {
                             arg1 = safelyIncrement()
-                            synchronized(callbacks) { // Make sure it is thread-safely
-                                callbacks.put(arg1, WeakReference(raRemoteMessageListener))
+                            synchronized(singleCallbacks) { // Make sure it is thread-safely
+                                singleCallbacks.put(arg1, WeakReference(raRemoteMessageListener))
                             }
                         })
                     }
@@ -87,8 +121,8 @@ internal abstract class BaseClientHandler<T : Parcelable> : Handler {
                         (outputMessenger as? Messenger)?.send(message.apply {
                             arg1 = safelyIncrement()
                             if (raRemoteMessageListener != null) {
-                                synchronized(callbacks) { // Make sure it is thread-safely
-                                    callbacks.put(arg1, WeakReference(raRemoteMessageListener))
+                                synchronized(singleCallbacks) { // Make sure it is thread-safely
+                                    singleCallbacks.put(arg1, WeakReference(raRemoteMessageListener))
                                 }
                             }
                         })

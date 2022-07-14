@@ -106,6 +106,28 @@ class RaClientApi private constructor() {
     }
 
     /**
+     * Add a remote broadcast message listener
+     * @param remoteMessageListener the [RaRemoteMessageListener]
+     */
+    fun addRemoteBroadcastMessageListener(remoteMessageListener: RaRemoteMessageListener) {
+        RaClientHandler.INSTANCE.addRemoteBroadCastMessageCallback(remoteMessageListener)
+    }
+
+    /**
+     * Remove a remote broadcast message listener
+     */
+    fun removeRemoteBroadcastMessageListener(remoteMessageListener: RaRemoteMessageListener) {
+        RaClientHandler.INSTANCE.removeRemoteBroadCastMessageCallback(remoteMessageListener)
+    }
+
+    /**
+     * Clear all remote broadcast message listeners
+     */
+    fun clearAllRemoteBroadcastMessageListener() {
+        RaClientHandler.INSTANCE.clearRemoteBroadCastMessageCallbacks()
+    }
+
+    /**
      * Current the client is bound to server.
      * ture bound, otherwise not.
      */

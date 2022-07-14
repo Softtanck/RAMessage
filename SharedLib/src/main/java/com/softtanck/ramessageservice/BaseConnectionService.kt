@@ -9,6 +9,7 @@ import android.os.Message
 import android.util.Log
 import com.softtanck.RaNotification
 import com.softtanck.model.RaCustomMessenger
+import com.softtanck.ramessageservice.engine.RaClientManager
 import com.softtanck.ramessageservice.engine.RaServerHandler
 import com.softtanck.ramessageservice.intercept.RaDefaultIntercept
 import com.softtanck.ramessageservice.intercept.RaResponseIntercept
@@ -24,7 +25,7 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
     private val TAG: String = BaseConnectionService::class.java.simpleName
     private val workHandlerThread = HandlerThread(TAG)
 
-    // TODO : Add a interceptor chain for developers to add their own interceptors
+    // Add an interceptor chain for developers to add their own interceptors
     private val intercepts = mutableListOf<RaResponseIntercept>().apply {
         add(RaDefaultIntercept())
     }
@@ -37,9 +38,10 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
     fun onRemoteMessageArrived(message: Message, isSyncCall: Boolean): Message? {
         Log.d(TAG, "[SERVER] onRemoteMessageArrived: $message, what:${message.what} isSyncCall:$isSyncCall, trxID:${message.arg1}")
         val response = RealInterceptorChain(intercepts, 0, this@BaseConnectionService).proceed(message, isSyncCall)
-        return if (isSyncCall) {
+        return if (isSyncCall) { // If it is a sync call, return the response
             response
         } else {
+            // The message will be changed in the interceptor chain, so we need to return the message directly
             sendMsgToClient(message)
             null
         }
@@ -85,6 +87,6 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
     }
 
     private fun sendMsgToClient(message: Message) {
-        customProcessHandler.sendMsgToClient(message)
+        RaClientManager.sendMsgToClient(message)
     }
 }

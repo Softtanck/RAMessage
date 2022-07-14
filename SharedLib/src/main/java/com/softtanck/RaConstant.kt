@@ -11,8 +11,13 @@ const val MESSAGE_REGISTER_CLIENT_REQ = MESSAGE_BASE_KEY + 1
 const val MESSAGE_REGISTER_CLIENT_RSP = MESSAGE_BASE_KEY + 2
 const val MESSAGE_CLIENT_DISCONNECT_REQ = MESSAGE_BASE_KEY + 3
 
-const val MESSAGE_CLIENT_REQ = MESSAGE_BASE_KEY + 4
-const val MESSAGE_CLIENT_RSP = MESSAGE_BASE_KEY + 5
+const val MESSAGE_CLIENT_SINGLE_REQ = MESSAGE_BASE_KEY + 4
+const val MESSAGE_CLIENT_SINGLE_RSP = MESSAGE_BASE_KEY + 5
+
+/**
+ * Sent from the server to the client to indicate the something changed.
+ */
+const val MESSAGE_CLIENT_BROADCAST_RSP = MESSAGE_BASE_KEY + 6
 
 const val MESSAGE_BUNDLE_REPLY_TO_KEY = "message_bundle_reply_to_key"
 const val MESSAGE_BUNDLE_METHOD_NAME_KEY = "message_bundle_method_name_key"
