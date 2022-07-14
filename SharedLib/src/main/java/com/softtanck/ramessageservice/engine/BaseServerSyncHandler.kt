@@ -18,9 +18,7 @@ package com.softtanck.ramessageservice.engine
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
-import android.os.MessageQueue
 import com.softtanck.ramessage.IRaMessenger
-import com.softtanck.ramessageclient.core.util.ReflectionUtils
 import com.softtanck.ramessageservice.BaseConnectionService
 
 /**
@@ -40,32 +38,32 @@ internal open class BaseServerSyncHandler : Handler {
     constructor(looper: Looper, callback: Callback) : super(looper, callback)
 
     // IRaMessenger / IMessenger
-    private var _innerMessenger: Any? = null
+    val innerMessenger: IRaMessenger.Stub = BaseSyncHandlerImp()
 
-    // IRaMessenger / IMessenger
-    fun getIMessenger(): Any? = getIMessenger(true)
-
-    /**
-     * Hook the getIMessenger, for add more interfaces
-     *
-     * @param fromSystem use sys's binder
-     * @return IRaMessenger / IMessenger
-     */
-    fun getIMessenger(fromSystem: Boolean): Any? {
-        return if (fromSystem) {
-            ReflectionUtils.getIMessengerFromSystem(this)
-        } else {
-            // HOOK the messenger
-            val messageQueue: MessageQueue = ReflectionUtils.getMessageQueueFromHandler(this) ?: return getIMessenger(true)
-            synchronized(messageQueue) {
-                if (_innerMessenger != null) {
-                    return _innerMessenger
-                }
-                _innerMessenger = BaseSyncHandlerImp()
-                return _innerMessenger
-            }
-        }
-    }
+//    // IRaMessenger / IMessenger
+//    fun getIMessenger(): Any? = getIMessenger(true)
+//
+//    /**
+//     * Hook the getIMessenger, for add more interfaces
+//     *
+//     * @param fromSystem use sys's binder
+//     * @return IRaMessenger / IMessenger
+//     */
+//    fun getIMessenger(fromSystem: Boolean): Any? {
+//        return if (fromSystem) {
+//            ReflectionUtils.getIMessengerFromSystem(this)
+//        } else {
+//            // HOOK the messenger
+//            val messageQueue: MessageQueue = ReflectionUtils.getMessageQueueFromHandler(this) ?: return getIMessenger(true)
+//            synchronized(messageQueue) {
+//                if (_innerMessenger != null) {
+//                    return _innerMessenger
+//                }
+//                _innerMessenger = BaseSyncHandlerImp()
+//                return _innerMessenger
+//            }
+//        }
+//    }
 
     private inner class BaseSyncHandlerImp : IRaMessenger.Stub() {
         override fun send(msg: Message) {

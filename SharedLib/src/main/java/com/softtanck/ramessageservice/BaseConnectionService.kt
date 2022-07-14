@@ -4,7 +4,6 @@ import android.app.Service
 import android.content.Intent
 import android.os.HandlerThread
 import android.os.IBinder
-import android.os.IInterface
 import android.os.Message
 import android.util.Log
 import com.softtanck.RaNotification
@@ -49,7 +48,9 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
 
     @Suppress("LeakingThis")
     private val customProcessHandler: RaServerHandler = RaServerHandler(workHandlerThread.looper, this)
-    private val raCustomMessenger: RaCustomMessenger = RaCustomMessenger((customProcessHandler.getIMessenger(false) as IInterface).asBinder())
+
+    //    private val raCustomMessenger: RaCustomMessenger = RaCustomMessenger((customProcessHandler.getIMessenger(false) as IInterface).asBinder())
+    private val raCustomMessenger = customProcessHandler.innerMessenger
 
     override fun onCreate() {
         super.onCreate()
@@ -68,8 +69,8 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
         val clientVersionCode = intent.getIntExtra(RaCustomMessenger.raMsgVersion.first, -1)
         Log.d(TAG, "[SERVER] onBind coming, the client version code is:$clientVersionCode")
         // Return our custom Binder if that is supported in Clients. (IPC)
-        return if (raCustomMessenger.binder != null && clientVersionCode != -1 && RaCustomMessenger.raMsgVersion.second >= clientVersionCode) {
-            raCustomMessenger.binder
+        return if (raCustomMessenger.asBinder() != null && clientVersionCode != -1 && RaCustomMessenger.raMsgVersion.second >= clientVersionCode) {
+            raCustomMessenger.asBinder()
         } else {
             throw IllegalStateException("[SERVER] Failed to get the Messenger, Please check your handler")
         }

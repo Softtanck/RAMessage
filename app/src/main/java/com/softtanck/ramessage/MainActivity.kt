@@ -30,8 +30,8 @@ class MainActivity : AppCompatActivity() {
 //                testInterface.testVoid()
 //                val testBoolean = testInterface.testBoolean()
 //                Log.d("~~~", "testBoolean: $testBoolean")
-//                val testString = testInterface.testString()
-//                Log.d("~~~", "testString: $testString")
+                val testString = testInterface.testString()
+                Log.d("~~~", "testString: $testString")
                 GlobalScope.launch {
                     suspendTestFun()
                 }
