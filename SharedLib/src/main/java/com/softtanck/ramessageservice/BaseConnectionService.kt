@@ -48,8 +48,6 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
 
     @Suppress("LeakingThis")
     private val customProcessHandler: RaServerHandler = RaServerHandler(workHandlerThread.looper, this)
-
-    //    private val raCustomMessenger: RaCustomMessenger = RaCustomMessenger((customProcessHandler.getIMessenger(false) as IInterface).asBinder())
     private val raCustomMessenger = customProcessHandler.innerMessenger
 
     override fun onCreate() {

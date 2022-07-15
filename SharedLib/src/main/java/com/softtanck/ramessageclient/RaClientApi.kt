@@ -41,7 +41,7 @@ import com.softtanck.ramessageclient.core.util.ResponseHandler
 class RaClientApi private constructor() {
 
     @Volatile
-    private var _innerRaServiceConnector: BaseServiceConnection<Parcelable>? = null
+    private var _innerRaServiceConnector: BaseServiceConnection? = null
 
     private val raRetrofit by lazy { RaRetrofit(false) }
 

@@ -4,9 +4,11 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class RaTestModel(val testString: String) : Parcelable {
+data class Food(
+    val name: String
+) : Parcelable {
 
     override fun toString(): String {
-        return "testString:$testString"
+        return "name:$name"
     }
 }

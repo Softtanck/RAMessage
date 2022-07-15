@@ -1,7 +1,7 @@
 package com.softtanck.ramessageservice
 
 import android.util.Log
-import com.shared.model.RaTestModel
+import com.shared.model.Food
 import com.softtanck.ramessageservice.`interface`.RaTestInterface
 
 /**
@@ -9,39 +9,58 @@ import com.softtanck.ramessageservice.`interface`.RaTestInterface
  * @date 2022/3/22
  * Description: TODO
  */
+
+private val testFood = Food("Apple")
+
 interface MyServerTestFunImpl : RaTestInterface {
 
-    override fun testReturnAModel(testString: String, testNumber: Int): RaTestModel {
-        Log.d("~~~", "[SERVER] testReturnAModel: Service is invoked, testString:$testString, testNumber:$testNumber")
-        return RaTestModel("服务端返回新的ID")
+    override fun getAFood(): Food? {
+        Log.d("~~~", "[SERVER] getAFood: Service is invoked")
+        return testFood
     }
 
-    override fun testReturnAllList(testString: String): List<RaTestModel> {
-        Log.d("~~~", "[SERVER] testReturnAllList: Service is invoked")
-        return arrayListOf(RaTestModel("新接口返回的服务端返回新的ID"))
+    override fun getAFoodWithParameter(foodName: String): Food? {
+        Log.d("~~~", "[SERVER] getAFoodWithParameter: Service is invoked, foodName:$foodName")
+        return testFood.apply {
+            name = foodName
+        }
     }
 
-    override fun testVoid() {
-        Log.d("~~~", "[SERVER] testVoid: Service is invoked")
+    override fun getAllFoods(): List<Food>? {
+        Log.d("~~~", "[SERVER] getAllFoods")
+        return mutableListOf<Food>().apply {
+            repeat(10) {
+                add(testFood)
+            }
+        }
     }
 
-    override fun testBoolean(): Boolean {
-        Log.d("~~~", "testBoolean: ")
+    override fun eatFood() {
+        Log.d("~~~", "[SERVER] eatFood")
+    }
+
+    override fun buyFood(): Boolean {
+        Log.d("~~~", "[SERVER] buyFood")
         return true
     }
 
-    override fun testString(): String {
-        Log.d("~~~", "testString: ")
-        return "你好"
+    override fun getFoodName(): String {
+        Log.d("~~~", "[SERVER] getFoodName")
+        return testFood.name
     }
 
-    override fun testSendString(testString: String): String {
-        Log.d("~~~", "testSendString: $testString")
-        return "你好2"
+    override fun setFoodName(foodName: String): String {
+        Log.d("~~~", "[SERVER] setFoodName: $foodName")
+        return testFood.name
     }
 
-    override fun suspendFun(): Boolean {
-        Log.d("~~~", "[SERVER] suspendFun: Service is invoked, Thread:${Thread.currentThread()}")
+    override fun suspendBuyFood(): Boolean {
+        Log.d("~~~", "[SERVER] suspendBuyFood")
         return true
+    }
+
+    override fun suspendGetFood(): Food {
+        Log.d("~~~", "[SERVER] suspendGetFood")
+        return testFood
     }
 }

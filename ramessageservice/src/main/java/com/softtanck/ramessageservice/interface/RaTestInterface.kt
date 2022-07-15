@@ -1,6 +1,6 @@
 package com.softtanck.ramessageservice.`interface`
 
-import com.shared.model.RaTestModel
+import com.shared.model.Food
 
 /**
  * @author Softtanck
@@ -8,12 +8,14 @@ import com.shared.model.RaTestModel
  * Description: TODO
  */
 interface RaTestInterface {
-    fun testReturnAModel(testString: String, testNumber: Int): RaTestModel?
-    fun testReturnAllList(testString: String): List<RaTestModel>?
-    fun testVoid()
-    fun testBoolean(): Boolean
-    fun testString(): String
-    fun testSendString(testString: String): String
+    fun getAFood(): Food?
+    fun getAFoodWithParameter(foodName: String): Food?
+    fun getAllFoods(): List<Food>?
+    fun eatFood()
+    fun buyFood(): Boolean
+    fun getFoodName(): String
+    fun setFoodName(foodName: String): String
 
-    fun suspendFun(): Boolean
+    fun suspendBuyFood(): Boolean?
+    fun suspendGetFood(): Food?
 }
