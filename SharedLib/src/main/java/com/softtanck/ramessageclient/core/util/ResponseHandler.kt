@@ -16,7 +16,16 @@ internal object ResponseHandler {
                 MESSAGE_BUNDLE_PARCELABLE_TYPE -> {
                     getParcelable<Parcelable>(MESSAGE_BUNDLE_NORMAL_RSP_KEY)
                 }
-                MESSAGE_BUNDLE_ARRAYLIST_TYPE -> {
+                MESSAGE_BUNDLE_ARRAYLIST_CHAR_SEQUENCE_TYPE -> {
+                    getCharSequenceArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY)
+                }
+                MESSAGE_BUNDLE_ARRAYLIST_INTEGER_TYPE -> {
+                    getIntegerArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY)
+                }
+                MESSAGE_BUNDLE_ARRAYLIST_STRING_TYPE -> {
+                    getStringArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY)
+                }
+                MESSAGE_BUNDLE_ARRAYLIST_PARCELABLE_TYPE -> {
                     getParcelableArrayList<Parcelable>(MESSAGE_BUNDLE_NORMAL_RSP_KEY)
                 }
                 MESSAGE_BUNDLE_BOOLEAN_TYPE -> {

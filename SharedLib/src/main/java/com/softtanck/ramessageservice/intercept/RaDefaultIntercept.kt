@@ -54,9 +54,28 @@ internal class RaDefaultIntercept : RaResponseIntercept {
                             putParcelable(MESSAGE_BUNDLE_NORMAL_RSP_KEY, remoteCallResult as Parcelable?)
                         }
                         is ArrayList<*> -> {
-                            // FIXME : 这儿可能会crash，如果是List<String>.因为这儿强制要求的是一个Parcelable.
-                            putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_ARRAYLIST_TYPE)
-                            putParcelableArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY, remoteCallResult as java.util.ArrayList<out Parcelable>?)
+                            val tempTypedStringArrayList = remoteCallResult.asListOfType<String>()
+                            val tempTypedIntArrayList = remoteCallResult.asListOfType<Int>()
+                            val tempTypedParcelableArrayList = remoteCallResult.asListOfType<Parcelable>()
+                            val tempTypedCharSequenceArrayList = remoteCallResult.asListOfType<CharSequence>()
+                            when {
+                                tempTypedStringArrayList != null -> {
+                                    putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_ARRAYLIST_STRING_TYPE)
+                                    putStringArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY, tempTypedStringArrayList)
+                                }
+                                tempTypedIntArrayList != null -> {
+                                    putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_ARRAYLIST_INTEGER_TYPE)
+                                    putIntegerArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY, tempTypedIntArrayList)
+                                }
+                                tempTypedParcelableArrayList != null -> {
+                                    putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_ARRAYLIST_PARCELABLE_TYPE)
+                                    putParcelableArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY, tempTypedParcelableArrayList)
+                                }
+                                tempTypedCharSequenceArrayList != null -> {
+                                    putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_ARRAYLIST_CHAR_SEQUENCE_TYPE)
+                                    putCharSequenceArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY, tempTypedCharSequenceArrayList)
+                                }
+                            }
                         }
                         is Boolean -> {
                             putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_BOOLEAN_TYPE)
@@ -86,4 +105,9 @@ internal class RaDefaultIntercept : RaResponseIntercept {
         return raChain.proceed(message, isSyncCall)
     }
 
+    // https://kotlinlang.org/docs/typecasts.html#unchecked-casts
+    private inline fun <reified T> ArrayList<*>.asListOfType(): ArrayList<T>? = if (all { it is T })
+        @Suppress("UNCHECKED_CAST")
+        this as ArrayList<T> else
+        null
 }
