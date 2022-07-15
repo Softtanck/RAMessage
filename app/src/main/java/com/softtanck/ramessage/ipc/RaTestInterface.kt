@@ -1,13 +1,14 @@
-package com.softtanck.ramessageservice.`interface`
+package com.softtanck.ramessage.ipc
 
 import com.shared.model.Food
+import com.softtanck.RaMessageInterface
 
 /**
  * @author Softtanck
  * @date 2022/3/12
  * Description: TODO
  */
-interface RaTestInterface {
+interface RaTestInterface : RaMessageInterface {
     fun getAFood(): Food?
     fun getAFoodWithParameter(foodName: String): Food?
     fun getAllFoods(): List<Food>?
@@ -16,6 +17,6 @@ interface RaTestInterface {
     fun getFoodName(): String
     fun setFoodName(foodName: String): String
 
-    fun suspendBuyFood(): Boolean?
-    fun suspendGetFood(): Food?
+    suspend fun suspendBuyFood(): Boolean?
+    suspend fun suspendGetFood(): Food?
 }

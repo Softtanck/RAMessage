@@ -16,6 +16,7 @@
 package com.softtanck.model
 
 import android.os.Parcelable
+import androidx.annotation.Keep
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.RawValue
 
@@ -24,5 +25,6 @@ import kotlinx.parcelize.RawValue
  * A standard parameter builder.
  * Will be used in [RemoteServiceMethod]
  */
+@Keep
 @Parcelize
 data class RaRequestTypeArg(val arg: @RawValue Any) : Parcelable

@@ -17,12 +17,10 @@ import java.util.concurrent.atomic.AtomicInteger
  * @date 2022/3/12
  * Description: TODO
  */
-internal abstract class BaseClientHandler : Handler {
-    private val TAG: String = this.javaClass.simpleName
-
-    constructor() : super()
-    constructor(looper: Looper) : super(looper)
-    constructor(looper: Looper, callback: Callback) : super(looper, callback)
+internal abstract class BaseClientHandler(looper: Looper) : Handler(looper) {
+    companion object {
+        private const val TAG: String = "BaseClientHandler"
+    }
 
     val innerMessenger: IRaMessenger.Stub = RaCustomClientMessengerImpl()
 

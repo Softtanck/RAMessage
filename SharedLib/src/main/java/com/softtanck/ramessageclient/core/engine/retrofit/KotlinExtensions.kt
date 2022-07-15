@@ -22,14 +22,16 @@ import android.os.Parcelable
 import com.softtanck.model.RaRequestTypeParameter
 import com.softtanck.ramessageclient.RaClientApi
 import com.softtanck.ramessageclient.core.util.ResponseHandler
+import com.softtanck.ramessageservice.util.ServerUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.lang.reflect.Method
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.intrinsics.intercepted
 import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-
 
 suspend fun <T, F : Parcelable> awaitResponse(methodName: String, parameters: ArrayList<RaRequestTypeParameter>, argsList: ArrayList<F>): T? =
     suspendCancellableCoroutine { continuation ->
@@ -57,4 +59,27 @@ internal suspend fun Exception.suspendAndThrow(): Nothing {
         }
         COROUTINE_SUSPENDED
     }
+}
+
+/**
+ * Invoke the normal or suspend method.
+ * @param obj obj in the object
+ * @param args any parameters for this the method
+ */
+fun Method.invokeCompat(obj: Any, vararg args: Any?): Any? {
+    val isSuspendMethod = ServerUtil.isSuspendMethod(this)
+    return if (isSuspendMethod) {
+        runBlocking { this@invokeCompat.invokeSuspend(obj, *args) }
+    } else {
+        this.invoke(obj, *args)
+    }
+}
+
+/**
+ * Invoke the suspend method.
+ * @param obj obj in the object
+ * @param args any parameters for this the method
+ */
+suspend fun Method.invokeSuspend(obj: Any, vararg args: Any?): Any? = suspendCoroutineUninterceptedOrReturn { cont ->
+    invoke(obj, *args, cont)
 }

@@ -2,7 +2,8 @@ package com.softtanck.ramessageservice
 
 import android.util.Log
 import com.shared.model.Food
-import com.softtanck.ramessageservice.`interface`.RaTestInterface
+import com.softtanck.RaMessageInterface
+import com.softtanck.ramessageservice.ipc.RaTestInterface
 
 /**
  * @author Softtanck
@@ -54,12 +55,12 @@ interface MyServerTestFunImpl : RaTestInterface {
         return testFood.name
     }
 
-    override fun suspendBuyFood(): Boolean {
+    override suspend fun suspendBuyFood(): Boolean {
         Log.d("~~~", "[SERVER] suspendBuyFood")
         return true
     }
 
-    override fun suspendGetFood(): Food {
+    override suspend fun suspendGetFood(): Food {
         Log.d("~~~", "[SERVER] suspendGetFood")
         return testFood
     }

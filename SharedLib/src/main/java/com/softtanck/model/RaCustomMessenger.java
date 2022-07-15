@@ -7,6 +7,7 @@ import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.Pair;
 
+import androidx.annotation.Keep;
 import androidx.annotation.Nullable;
 
 import com.softtanck.ramessage.IRaMessenger;
@@ -16,6 +17,7 @@ import com.softtanck.ramessageclient.core.engine.RaClientHandler;
  * Created by Softtanck on 2022/3/12
  * Copied from Android's SDK. ref: Messenger.java
  */
+@Keep
 public class RaCustomMessenger implements Parcelable {
     /**
      * For upgrading logic. And the default version is 1.

@@ -8,9 +8,9 @@ import android.util.Log
 import com.softtanck.*
 import com.softtanck.model.RaRequestTypeArg
 import com.softtanck.model.RaRequestTypeParameter
+import com.softtanck.ramessageclient.core.engine.retrofit.invokeCompat
 import com.softtanck.ramessageservice.model.RaChain
 import com.softtanck.ramessageservice.util.ServerUtil
-import java.lang.reflect.Method
 
 /**
  * @author Softtanck
@@ -18,7 +18,11 @@ import java.lang.reflect.Method
  * Description: TODO
  */
 internal class RaDefaultIntercept : RaResponseIntercept {
-    private val TAG: String = RaDefaultIntercept::class.java.simpleName
+
+    companion object {
+        private const val TAG = "RaDefaultIntercept"
+    }
+
     override fun intercept(raChain: RaChain, message: Message, isSyncCall: Boolean): Message? {
         try {
             val serBundle: Bundle? = message.data?.apply { classLoader = this@RaDefaultIntercept.javaClass.classLoader }
@@ -35,7 +39,7 @@ internal class RaDefaultIntercept : RaResponseIntercept {
                     Log.e(TAG, "[SERVER] loadServiceMethod is null")
                     return raChain.proceed(message, isSyncCall)
                 }
-                val remoteCallResult = loadServiceMethod.method.invoke(raChain.baseConnectionService, *Array(requestArgs.size) {
+                val remoteCallResult = loadServiceMethod.method.invokeCompat(raChain.baseConnectionService, *Array(requestArgs.size) {
                     if (requestArgs[it] is RaRequestTypeArg) {
                         (requestArgs[it] as RaRequestTypeArg).arg
                     } else {

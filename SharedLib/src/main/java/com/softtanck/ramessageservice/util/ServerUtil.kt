@@ -5,8 +5,10 @@ import com.softtanck.model.RaRequestTypeParameter
 import com.softtanck.ramessageservice.BaseConnectionService
 import com.softtanck.ramessageservice.model.RaRemoteMethod
 import com.softtanck.sharedlib.BuildConfig
+import com.softtanck.util.Utils
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.Continuation
 
 /**
  * @author Softtanck
@@ -19,7 +21,6 @@ internal object ServerUtil {
 
     private const val TAG = "ServerUtil"
 
-    // TODO : TBD improve performance
     fun loadServiceMethod(remoteMethodName: String, requestParameters: ArrayList<RaRequestTypeParameter>, baseConnectionService: BaseConnectionService): RaRemoteMethod? {
         var result = serviceMethodCache[remoteMethodName]
         if (result != null && isEqual(requestParameters, result.methodRequestParams)) {
@@ -41,6 +42,24 @@ internal object ServerUtil {
             }
         }
         return result
+    }
+
+    /**
+     * Check current method is suspend method
+     * @param targetMethod the checked method
+     * @return true if the method is suspend method
+     */
+    fun isSuspendMethod(targetMethod: Method): Boolean {
+        for (parameterType in targetMethod.genericParameterTypes) {
+            try {
+                if (Utils.getRawType(parameterType) == Continuation::class.java) {
+                    return true
+                }
+            } catch (ignored: NoClassDefFoundError) {
+                // Ignored
+            }
+        }
+        return false
     }
 
     private fun <T> isEqual(first: List<T>, second: List<T>): Boolean {

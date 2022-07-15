@@ -61,7 +61,7 @@ internal class RaRetrofit(private val validateEagerly: Boolean) {
         synchronized(serviceMethodCache) {
             result = serviceMethodCache[method]
             if (result == null) {
-                result = ServiceMethod.parseAnnotations<Any>(this, method)
+                result = ServiceMethod.parseAnnotations<Any>(method)
                 serviceMethodCache[method] = result
             }
         }

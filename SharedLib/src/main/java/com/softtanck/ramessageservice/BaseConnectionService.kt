@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Message
+import android.os.Messenger
 import android.util.Log
 import com.softtanck.RaNotification
 import com.softtanck.model.RaCustomMessenger

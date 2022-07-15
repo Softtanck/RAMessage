@@ -8,6 +8,7 @@ import com.softtanck.*
 // TODO： TBD
 internal object ResponseHandler {
 
+    @Suppress("UNCHECKED_CAST")
     fun <T> makeupMessageForRsp(message: Message?): T? {
         val serBundle: Bundle = message?.data ?: return null
         val remoteInvokeResult = serBundle.apply { classLoader = ResponseHandler.javaClass.classLoader }.run {

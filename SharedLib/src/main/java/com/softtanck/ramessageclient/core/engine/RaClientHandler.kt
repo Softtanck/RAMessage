@@ -7,17 +7,13 @@ import com.softtanck.model.RaCustomMessenger
 import com.softtanck.ramessage.IRaMessenger
 import com.softtanck.ramessageclient.core.listener.*
 import com.softtanck.ramessageclient.core.util.LockHelper
-import com.softtanck.ramessageclient.core.util.ReflectionUtils
 
 /**
  * @author Softtanck
  * @date 2022/3/12
  * Description: TODO
  */
-internal class RaClientHandler : BaseClientHandler {
-    constructor() : super()
-    constructor(looper: Looper) : super(looper)
-    constructor(looper: Looper, callback: Callback) : super(looper, callback)
+internal class RaClientHandler(looper: Looper) : BaseClientHandler(looper) {
 
     companion object {
         private val TAG: String = RaClientHandler::class.java.simpleName

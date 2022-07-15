@@ -6,7 +6,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.shared.model.Food
-import com.softtanck.ramessage.`interface`.RaTestInterface
+import com.softtanck.ramessage.ipc.RaTestInterface
 import com.softtanck.ramessageclient.RaClientApi
 import com.softtanck.ramessageclient.core.listener.BindStateListener
 import com.softtanck.ramessageclient.core.listener.DisconnectedReason
