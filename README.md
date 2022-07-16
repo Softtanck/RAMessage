@@ -5,13 +5,13 @@
 - Android 4+ 👍
 - 同步调用 👍
 - 异步调用 👍
-- 线程安全 👍 
-- 一个服务端对多客户端 👍
-- 双向发送和实现 👍（双端支持发送和接受：同步、异步；）
 - 协程 👍
-- 支持接口参数、返回参数为：基本类型或实现了Parcelable或List<out Parcelable> 👍
+- 线程安全 👍
+- 一个服务端对多客户端 👍
+- 双向发送和实现 👍（双端支持发送和接收：同步、异步；）
+- 支持接口参数、返回参数为：1、基本类型；2、实现了Parcelable的对象；3、```List<out Parcelable>```；4、```List<out String>```；5、```List<out Int>```；6、```List<out Charsequence>``` 👍
 - 客户端连接异常断开自动重连 👍
-- 提醒消息 👍 
+- 提醒消息 👍
 - 异常机制 （WIP）
 - 混淆 👍
 ## 如何使用
@@ -19,7 +19,7 @@
 implementation 'com.github.Softtanck:RAMessage:0.1.1'
 ```
 ### 客户端
-- 1. 先在客户端定义想要IPC的接口；
+1. 先在客户端定义想要IPC的接口；
 ```kotlin
 interface RaTestInterface : IRaMessageInterface {
     fun getAFood(): Food?
@@ -34,7 +34,7 @@ interface RaTestInterface : IRaMessageInterface {
     suspend fun suspendGetFood(): Food?
 }
 ```
-- 2. 在客户端绑定远程服务成功后，通过 ```RaClientApi.INSTANCE.create(RaTestInterface::class.java)```方法即可获得对应服务，然后调用对应接口即可；
+2. 在客户端绑定远程服务成功后，通过 ```RaClientApi.INSTANCE.create(RaTestInterface::class.java)```方法即可获得对应服务，然后调用对应接口即可；
 #### 客户端示例    
 ```kotlin
 // 1. 提供被绑定的远程服务器名字；2. 在绑定成功后，调用远程服务即可；
@@ -95,8 +95,8 @@ RaClientApi.INSTANCE.bindRaConnectionService(this, ComponentName("com.softtanck.
 })
 ```
 ### 服务端
-- 1. 继承```BaseConnectionService```
-- 2. 实现```RaTestInterface```接口
+1. 继承```BaseConnectionService```
+2. 实现```RaTestInterface```接口
 #### 服务端示例    
 ```kotlin
 interface MyServerTestFunImpl : RaTestInterface {
