@@ -4,19 +4,16 @@ import android.os.*
 import android.util.Log
 import com.softtanck.*
 import com.softtanck.model.RaCustomMessenger
+import com.softtanck.ramessage.IRaMessenger
 import com.softtanck.ramessageclient.core.listener.*
 import com.softtanck.ramessageclient.core.util.LockHelper
-import com.softtanck.ramessageclient.core.util.ReflectionUtils
 
 /**
  * @author Softtanck
  * @date 2022/3/12
  * Description: TODO
  */
-internal class RaClientHandler : BaseClientHandler<Parcelable> {
-    constructor() : super()
-    constructor(looper: Looper) : super(looper)
-    constructor(looper: Looper, callback: Callback) : super(looper, callback)
+internal class RaClientHandler(looper: Looper) : BaseClientHandler(looper) {
 
     companion object {
         private val TAG: String = RaClientHandler::class.java.simpleName
@@ -31,14 +28,7 @@ internal class RaClientHandler : BaseClientHandler<Parcelable> {
             RaClientHandler(workThreadHandler.looper)
         }.apply {
             // 3. Remember create an inBoundMessenger
-            // But we need check the permission of the client, since the client may not have the permission to access the hidden API.
-            if (ReflectionUtils.getMessageQueueFromHandler(this.value) != null) {
-                inBoundMessenger = RaCustomMessenger(this.value)
-                Log.d(TAG, "[CLIENT] Good to go!")
-            } else {
-                inBoundMessenger = Messenger(this.value)
-                Log.e(TAG, "[CLIENT] Oops, The client has no permission to access the hidden API!!!")
-            }
+            inBoundMessenger = RaCustomMessenger(this.value)
         }
     }
 
@@ -47,7 +37,7 @@ internal class RaClientHandler : BaseClientHandler<Parcelable> {
      * @param outBoundMessenger the outBoundMessenger from server
      */
     @Synchronized
-    fun <T : Parcelable> setOutBoundMessenger(outBoundMessenger: T?) {
+    fun setOutBoundMessenger(outBoundMessenger: IRaMessenger?) {
         outputMessenger = outBoundMessenger
     }
 

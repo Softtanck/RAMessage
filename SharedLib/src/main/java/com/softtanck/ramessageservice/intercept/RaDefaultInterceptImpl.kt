@@ -8,20 +8,24 @@ import android.util.Log
 import com.softtanck.*
 import com.softtanck.model.RaRequestTypeArg
 import com.softtanck.model.RaRequestTypeParameter
+import com.softtanck.ramessageclient.core.engine.retrofit.invokeCompat
 import com.softtanck.ramessageservice.model.RaChain
 import com.softtanck.ramessageservice.util.ServerUtil
-import java.lang.reflect.Method
 
 /**
  * @author Softtanck
  * @date 2022/3/23
  * Description: TODO
  */
-internal class RaDefaultIntercept : RaResponseIntercept {
-    private val TAG: String = RaDefaultIntercept::class.java.simpleName
+internal class RaDefaultInterceptImpl : IRaResponseIntercept {
+
+    companion object {
+        private const val TAG = "RaDefaultIntercept"
+    }
+
     override fun intercept(raChain: RaChain, message: Message, isSyncCall: Boolean): Message? {
         try {
-            val serBundle: Bundle? = message.data?.apply { classLoader = this@RaDefaultIntercept.javaClass.classLoader }
+            val serBundle: Bundle? = message.data?.apply { classLoader = this@RaDefaultInterceptImpl.javaClass.classLoader }
             if (serBundle == null) {
                 return raChain.proceed(message, isSyncCall)
             } else {
@@ -35,7 +39,7 @@ internal class RaDefaultIntercept : RaResponseIntercept {
                     Log.e(TAG, "[SERVER] loadServiceMethod is null")
                     return raChain.proceed(message, isSyncCall)
                 }
-                val remoteCallResult = loadServiceMethod.method.invoke(raChain.baseConnectionService, *Array(requestArgs.size) {
+                val remoteCallResult = loadServiceMethod.method.invokeCompat(raChain.baseConnectionService, *Array(requestArgs.size) {
                     if (requestArgs[it] is RaRequestTypeArg) {
                         (requestArgs[it] as RaRequestTypeArg).arg
                     } else {
@@ -50,9 +54,28 @@ internal class RaDefaultIntercept : RaResponseIntercept {
                             putParcelable(MESSAGE_BUNDLE_NORMAL_RSP_KEY, remoteCallResult as Parcelable?)
                         }
                         is ArrayList<*> -> {
-                            // FIXME : 这儿可能会crash，如果是List<String>.因为这儿强制要求的是一个Parcelable.
-                            putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_ARRAYLIST_TYPE)
-                            putParcelableArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY, remoteCallResult as java.util.ArrayList<out Parcelable>?)
+                            val tempTypedStringArrayList = remoteCallResult.asListOfType<String>()
+                            val tempTypedIntArrayList = remoteCallResult.asListOfType<Int>()
+                            val tempTypedParcelableArrayList = remoteCallResult.asListOfType<Parcelable>()
+                            val tempTypedCharSequenceArrayList = remoteCallResult.asListOfType<CharSequence>()
+                            when {
+                                tempTypedStringArrayList != null -> {
+                                    putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_ARRAYLIST_STRING_TYPE)
+                                    putStringArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY, tempTypedStringArrayList)
+                                }
+                                tempTypedIntArrayList != null -> {
+                                    putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_ARRAYLIST_INTEGER_TYPE)
+                                    putIntegerArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY, tempTypedIntArrayList)
+                                }
+                                tempTypedParcelableArrayList != null -> {
+                                    putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_ARRAYLIST_PARCELABLE_TYPE)
+                                    putParcelableArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY, tempTypedParcelableArrayList)
+                                }
+                                tempTypedCharSequenceArrayList != null -> {
+                                    putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_ARRAYLIST_CHAR_SEQUENCE_TYPE)
+                                    putCharSequenceArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY, tempTypedCharSequenceArrayList)
+                                }
+                            }
                         }
                         is Boolean -> {
                             putInt(MESSAGE_BUNDLE_RSP_TYPE_KEY, MESSAGE_BUNDLE_BOOLEAN_TYPE)
@@ -82,4 +105,9 @@ internal class RaDefaultIntercept : RaResponseIntercept {
         return raChain.proceed(message, isSyncCall)
     }
 
+    // https://kotlinlang.org/docs/typecasts.html#unchecked-casts
+    private inline fun <reified T> ArrayList<*>.asListOfType(): ArrayList<T>? = if (all { it is T })
+        @Suppress("UNCHECKED_CAST")
+        this as ArrayList<T> else
+        null
 }

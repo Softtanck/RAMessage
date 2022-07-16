@@ -18,14 +18,12 @@ package com.softtanck.ramessageclient.core.engine.retrofit;
 import androidx.annotation.Nullable;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 
 abstract class ServiceMethod<T> {
 
-    static <T> ServiceMethod<T> parseAnnotations(RaRetrofit retrofit, Method method) {
-        RequestFactory requestFactory = RequestFactory.parseAnnotations(retrofit, method);
-        return RemoteServiceMethod.parseAnnotations(retrofit, method, requestFactory);
+    static <T> ServiceMethod<T> parseAnnotations(Method method) {
+        RequestFactory requestFactory = RequestFactory.parseAnnotations(method);
+        return RemoteServiceMethod.parseAnnotations(method, requestFactory);
     }
 
     abstract @Nullable

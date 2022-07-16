@@ -7,6 +7,7 @@ import android.content.ServiceConnection
 import android.os.Parcelable
 import android.util.Log
 import com.softtanck.model.RaCustomMessenger
+import com.softtanck.ramessage.IRaMessenger
 import com.softtanck.ramessageclient.core.engine.RaClientHandler
 import com.softtanck.ramessageclient.core.listener.BindStateListener
 import com.softtanck.ramessageclient.core.listener.BindStateListenerManager
@@ -18,10 +19,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @date 2022/3/12
  * Description: TODO
  */
-abstract class BaseServiceConnection<T : Parcelable>(val context: Context) : ServiceConnection {
+abstract class BaseServiceConnection(val context: Context) : ServiceConnection {
     private val TAG: String = this.javaClass.simpleName
 
-    protected var outBoundMessenger: T? = null
+    protected var outBoundMessenger: IRaMessenger? = null
 
     // The unbind is triggered by manual, Like [unbindRaConnectionService]
     // This flag is for reconnect the service if the IBinder died from server.

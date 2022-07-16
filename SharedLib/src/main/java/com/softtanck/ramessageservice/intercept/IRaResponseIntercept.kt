@@ -8,7 +8,7 @@ import com.softtanck.ramessageservice.model.RaChain
  * @date 2022/3/23
  * Description: TODO
  */
-interface RaResponseIntercept {
+interface IRaResponseIntercept {
 
     /**
      * Intercept the response before it is handled by the chain.

@@ -8,6 +8,7 @@ import com.softtanck.*
 // TODO： TBD
 internal object ResponseHandler {
 
+    @Suppress("UNCHECKED_CAST")
     fun <T> makeupMessageForRsp(message: Message?): T? {
         val serBundle: Bundle = message?.data ?: return null
         val remoteInvokeResult = serBundle.apply { classLoader = ResponseHandler.javaClass.classLoader }.run {
@@ -15,7 +16,16 @@ internal object ResponseHandler {
                 MESSAGE_BUNDLE_PARCELABLE_TYPE -> {
                     getParcelable<Parcelable>(MESSAGE_BUNDLE_NORMAL_RSP_KEY)
                 }
-                MESSAGE_BUNDLE_ARRAYLIST_TYPE -> {
+                MESSAGE_BUNDLE_ARRAYLIST_CHAR_SEQUENCE_TYPE -> {
+                    getCharSequenceArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY)
+                }
+                MESSAGE_BUNDLE_ARRAYLIST_INTEGER_TYPE -> {
+                    getIntegerArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY)
+                }
+                MESSAGE_BUNDLE_ARRAYLIST_STRING_TYPE -> {
+                    getStringArrayList(MESSAGE_BUNDLE_NORMAL_RSP_KEY)
+                }
+                MESSAGE_BUNDLE_ARRAYLIST_PARCELABLE_TYPE -> {
                     getParcelableArrayList<Parcelable>(MESSAGE_BUNDLE_NORMAL_RSP_KEY)
                 }
                 MESSAGE_BUNDLE_BOOLEAN_TYPE -> {

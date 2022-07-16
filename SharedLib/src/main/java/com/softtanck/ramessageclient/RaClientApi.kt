@@ -20,6 +20,7 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Message
 import android.os.Parcelable
+import com.softtanck.IRaMessageInterface
 import com.softtanck.MESSAGE_BUNDLE_METHOD_NAME_KEY
 import com.softtanck.MESSAGE_BUNDLE_TYPE_ARG_KEY
 import com.softtanck.MESSAGE_BUNDLE_TYPE_PARAMETER_KEY
@@ -36,12 +37,12 @@ import com.softtanck.ramessageclient.core.util.ResponseHandler
 /**
  * @author Softtanck
  * @date 2022/3/12
- * Description: TODO
+ * Description: [getDefaultComponentName]、[addBindStateListener]、[removeBindStateListener]、[clearAllBindStateListener]、[removeRemoteBroadcastMessageListener]
  */
 class RaClientApi private constructor() {
 
     @Volatile
-    private var _innerRaServiceConnector: BaseServiceConnection<Parcelable>? = null
+    private var _innerRaServiceConnector: BaseServiceConnection? = null
 
     private val raRetrofit by lazy { RaRetrofit(false) }
 
@@ -171,6 +172,6 @@ class RaClientApi private constructor() {
      * Create an implementation of the API endpoints defined by the {@code service} interface.
      * Like retrofit.
      */
-    fun <T> create(service: Class<T>): T = raRetrofit.create(service)
+    fun <T : IRaMessageInterface> create(service: Class<T>): T = raRetrofit.create(service)
 
 }

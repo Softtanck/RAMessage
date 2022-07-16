@@ -18,9 +18,7 @@ package com.softtanck.ramessageservice.engine
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
-import android.os.MessageQueue
 import com.softtanck.ramessage.IRaMessenger
-import com.softtanck.ramessageclient.core.util.ReflectionUtils
 import com.softtanck.ramessageservice.BaseConnectionService
 
 /**
@@ -28,44 +26,11 @@ import com.softtanck.ramessageservice.BaseConnectionService
  * @date 2022/3/12
  * Description: TODO
  */
-internal open class BaseServerSyncHandler : Handler {
-    private var baseConnectionService: BaseConnectionService? = null
-
-    constructor() : super()
-    constructor(looper: Looper) : super(looper)
-    constructor(looper: Looper, baseConnectionService: BaseConnectionService) : super(looper) {
-        this.baseConnectionService = baseConnectionService
-    }
-
-    constructor(looper: Looper, callback: Callback) : super(looper, callback)
+internal open class BaseServerSyncHandler(looper: Looper, baseConnectionService: BaseConnectionService) : Handler(looper) {
+    private var baseConnectionService: BaseConnectionService? = baseConnectionService
 
     // IRaMessenger / IMessenger
-    private var _innerMessenger: Any? = null
-
-    // IRaMessenger / IMessenger
-    fun getIMessenger(): Any? = getIMessenger(true)
-
-    /**
-     * Hook the getIMessenger, for add more interfaces
-     *
-     * @param fromSystem use sys's binder
-     * @return IRaMessenger / IMessenger
-     */
-    fun getIMessenger(fromSystem: Boolean): Any? {
-        return if (fromSystem) {
-            ReflectionUtils.getIMessengerFromSystem(this)
-        } else {
-            // HOOK the messenger
-            val messageQueue: MessageQueue = ReflectionUtils.getMessageQueueFromHandler(this) ?: return getIMessenger(true)
-            synchronized(messageQueue) {
-                if (_innerMessenger != null) {
-                    return _innerMessenger
-                }
-                _innerMessenger = BaseSyncHandlerImp()
-                return _innerMessenger
-            }
-        }
-    }
+    val innerMessenger: IRaMessenger.Stub = BaseSyncHandlerImp()
 
     private inner class BaseSyncHandlerImp : IRaMessenger.Stub() {
         override fun send(msg: Message) {

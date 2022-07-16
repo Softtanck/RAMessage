@@ -1,11 +1,16 @@
 package com.shared.model
 
 import android.os.Parcelable
+import androidx.annotation.Keep
 import kotlinx.parcelize.Parcelize
 
+@Keep
 @Parcelize
-data class RaTestModel(val testString: String) : Parcelable {
+data class Food(
+    val name: String
+) : Parcelable {
+
     override fun toString(): String {
-        return "testString:$testString"
+        return "name:$name"
     }
 }

@@ -16,6 +16,7 @@
 package com.softtanck.model
 
 import android.os.Parcelable
+import androidx.annotation.Keep
 import kotlinx.parcelize.Parcelize
 
 /**
@@ -23,5 +24,6 @@ import kotlinx.parcelize.Parcelize
  * A standard parameter builder.
  * Will be used in [RemoteServiceMethod]
  */
+@Keep
 @Parcelize
 data class RaRequestTypeParameter(val parameterTypeClasses: Class<*>) : Parcelable

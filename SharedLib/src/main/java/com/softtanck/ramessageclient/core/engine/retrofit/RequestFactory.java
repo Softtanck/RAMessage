@@ -1,36 +1,34 @@
 package com.softtanck.ramessageclient.core.engine.retrofit;
 
 
+import com.softtanck.util.Utils;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 import kotlin.coroutines.Continuation;
 
 final class RequestFactory {
-    public static RequestFactory parseAnnotations(RaRetrofit retrofit, Method method) {
-        return new Builder(retrofit, method).build();
+    public static RequestFactory parseAnnotations(Method method) {
+        return new Builder(method).build();
     }
 
-    final RaRetrofit retrofit;
     final Method method;
     final Type[] parameterTypes;
     final boolean isKotlinSuspendFunction;
 
     RequestFactory(Builder builder) {
-        retrofit = builder.retrofit;
         method = builder.method;
         parameterTypes = builder.parameterTypes;
         isKotlinSuspendFunction = builder.isKotlinSuspendFunction;
     }
 
     static final class Builder {
-        final RaRetrofit retrofit;
         final Method method;
         final Type[] parameterTypes;
         boolean isKotlinSuspendFunction;
 
-        Builder(RaRetrofit retrofit, Method method) {
-            this.retrofit = retrofit;
+        Builder(Method method) {
             this.method = method;
             this.parameterTypes = method.getGenericParameterTypes();
         }

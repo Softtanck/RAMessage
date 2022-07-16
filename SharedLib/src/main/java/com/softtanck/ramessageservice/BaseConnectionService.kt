@@ -4,15 +4,14 @@ import android.app.Service
 import android.content.Intent
 import android.os.HandlerThread
 import android.os.IBinder
-import android.os.IInterface
 import android.os.Message
 import android.util.Log
 import com.softtanck.RaNotification
 import com.softtanck.model.RaCustomMessenger
 import com.softtanck.ramessageservice.engine.RaClientManager
 import com.softtanck.ramessageservice.engine.RaServerHandler
-import com.softtanck.ramessageservice.intercept.RaDefaultIntercept
-import com.softtanck.ramessageservice.intercept.RaResponseIntercept
+import com.softtanck.ramessageservice.intercept.IRaResponseIntercept
+import com.softtanck.ramessageservice.intercept.RaDefaultInterceptImpl
 import com.softtanck.ramessageservice.intercept.RealInterceptorChain
 
 /**
@@ -26,8 +25,8 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
     private val workHandlerThread = HandlerThread(TAG)
 
     // Add an interceptor chain for developers to add their own interceptors
-    private val intercepts = mutableListOf<RaResponseIntercept>().apply {
-        add(RaDefaultIntercept())
+    private val intercepts = mutableListOf<IRaResponseIntercept>().apply {
+        add(RaDefaultInterceptImpl())
     }
 
     init {
@@ -36,7 +35,7 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
     }
 
     fun onRemoteMessageArrived(message: Message, isSyncCall: Boolean): Message? {
-        Log.d(TAG, "[SERVER] onRemoteMessageArrived: $message, what:${message.what} isSyncCall:$isSyncCall, trxID:${message.arg1}")
+        Log.d(TAG, "[SERVER] onRemoteMessageArrived: $message, what:${message.what} isSyncCall:$isSyncCall, trxID:${message.arg1}, thread:${Thread.currentThread()}")
         val response = RealInterceptorChain(intercepts, 0, this@BaseConnectionService).proceed(message, isSyncCall)
         return if (isSyncCall) { // If it is a sync call, return the response
             response
@@ -49,7 +48,7 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
 
     @Suppress("LeakingThis")
     private val customProcessHandler: RaServerHandler = RaServerHandler(workHandlerThread.looper, this)
-    private val raCustomMessenger: RaCustomMessenger = RaCustomMessenger((customProcessHandler.getIMessenger(false) as IInterface).asBinder())
+    private val raCustomMessenger = customProcessHandler.innerMessenger
 
     override fun onCreate() {
         super.onCreate()
@@ -68,8 +67,8 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
         val clientVersionCode = intent.getIntExtra(RaCustomMessenger.raMsgVersion.first, -1)
         Log.d(TAG, "[SERVER] onBind coming, the client version code is:$clientVersionCode")
         // Return our custom Binder if that is supported in Clients. (IPC)
-        return if (raCustomMessenger.binder != null && clientVersionCode != -1 && RaCustomMessenger.raMsgVersion.second >= clientVersionCode) {
-            raCustomMessenger.binder
+        return if (raCustomMessenger.asBinder() != null && clientVersionCode != -1 && RaCustomMessenger.raMsgVersion.second >= clientVersionCode) {
+            raCustomMessenger.asBinder()
         } else {
             throw IllegalStateException("[SERVER] Failed to get the Messenger, Please check your handler")
         }
