@@ -31,7 +31,7 @@ internal class RaDefaultInterceptImpl : IRaResponseIntercept {
             } else {
                 val remoteMethodName = serBundle.getString(MESSAGE_BUNDLE_METHOD_NAME_KEY)
                 if (TextUtils.isEmpty(remoteMethodName)) return raChain.proceed(message, isSyncCall)
-                Log.d(TAG, "[SERVER] remoteMethodName:$remoteMethodName")
+                Log.d(TAG, "[SERVER] remoteMethodName:$remoteMethodName, thread:${Thread.currentThread()}")
                 val requestParameters: ArrayList<RaRequestTypeParameter> = serBundle.getParcelableArrayList<RaRequestTypeParameter>(MESSAGE_BUNDLE_TYPE_PARAMETER_KEY) as ArrayList<RaRequestTypeParameter>
                 val loadServiceMethod = ServerUtil.loadServiceMethod(remoteMethodName!!, requestParameters, raChain.baseConnectionService)
                 val requestArgs: ArrayList<Parcelable> = serBundle.getParcelableArrayList<Parcelable>(MESSAGE_BUNDLE_TYPE_ARG_KEY) as ArrayList<Parcelable>

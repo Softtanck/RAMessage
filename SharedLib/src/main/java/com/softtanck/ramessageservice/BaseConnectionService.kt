@@ -22,7 +22,7 @@ import com.softtanck.ramessageservice.intercept.RealInterceptorChain
  */
 abstract class BaseConnectionService(private val startInForeground: Boolean = true) : Service() {
     private val TAG: String = BaseConnectionService::class.java.simpleName
-    private val workHandlerThread = HandlerThread(TAG)
+    private val workHandlerThread = HandlerThread("RaServiceWorkThread")
 
     // Add an interceptor chain for developers to add their own interceptors
     private val intercepts = mutableListOf<IRaResponseIntercept>().apply {
@@ -46,9 +46,7 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
         }
     }
 
-    @Suppress("LeakingThis")
-    private val customProcessHandler: RaServerHandler = RaServerHandler(workHandlerThread.looper, this)
-    private val raCustomMessenger = customProcessHandler.innerMessenger
+    private val customProcessHandler: RaServerHandler by lazy(LazyThreadSafetyMode.NONE) { RaServerHandler(workHandlerThread.looper, this) }
 
     override fun onCreate() {
         super.onCreate()
@@ -66,9 +64,10 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
     override fun onBind(intent: Intent): IBinder? {
         val clientVersionCode = intent.getIntExtra(RaCustomMessenger.raMsgVersion.first, -1)
         Log.d(TAG, "[SERVER] onBind coming, the client version code is:$clientVersionCode")
+        val tempCustomMessenger = customProcessHandler.innerMessenger
         // Return our custom Binder if that is supported in Clients. (IPC)
-        return if (raCustomMessenger.asBinder() != null && clientVersionCode != -1 && RaCustomMessenger.raMsgVersion.second >= clientVersionCode) {
-            raCustomMessenger.asBinder()
+        return if (tempCustomMessenger.asBinder() != null && clientVersionCode != -1 && RaCustomMessenger.raMsgVersion.second >= clientVersionCode) {
+            tempCustomMessenger.asBinder()
         } else {
             throw IllegalStateException("[SERVER] Failed to get the Messenger, Please check your handler")
         }
@@ -76,6 +75,7 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
 
     override fun onDestroy() {
         super.onDestroy()
+        customProcessHandler.removeCallbacksAndMessages(null)
         if (workHandlerThread.isAlive) workHandlerThread.quitSafely()
         Log.d(TAG, "[SERVER] onDestroy")
     }
