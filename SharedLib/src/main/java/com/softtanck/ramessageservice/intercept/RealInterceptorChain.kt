@@ -9,7 +9,7 @@ import com.softtanck.ramessageservice.model.RaChain
  * @date 2022/3/23
  * Description: TODO
  */
-internal class RealInterceptorChain(private val interceptors: List<RaResponseIntercept>, private val targetIndex: Int, baseConnectionService: BaseConnectionService) : RaChain(baseConnectionService) {
+internal class RealInterceptorChain(private val interceptors: List<IRaResponseIntercept>, private val targetIndex: Int, baseConnectionService: BaseConnectionService) : RaChain(baseConnectionService) {
     override fun proceed(message: Message, isSyncCall: Boolean): Message? {
         interceptors.size.let {
             if (targetIndex >= it) {

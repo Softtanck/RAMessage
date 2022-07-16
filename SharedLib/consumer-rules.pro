@@ -12,7 +12,7 @@
 # kept. Suspend functions are wrapped in continuations where the type argument
 # is used.
 -keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
--keep class * extends com.softtanck.RaMessageInterface { *;}
--keep interface * extends com.softtanck.RaMessageInterface { *;}
+-keep class * extends com.softtanck.IRaMessageInterface { *;}
+-keep interface * extends com.softtanck.IRaMessageInterface { *;}
 -keep class com.softtanck.ramessageclient.core.engine.retrofit.RemoteServiceMethod { *; }
 -keep class com.softtanck.ramessageservice.** { *; }

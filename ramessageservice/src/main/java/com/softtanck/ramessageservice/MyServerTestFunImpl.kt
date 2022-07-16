@@ -2,7 +2,6 @@ package com.softtanck.ramessageservice
 
 import android.util.Log
 import com.shared.model.Food
-import com.softtanck.RaMessageInterface
 import com.softtanck.ramessageservice.ipc.RaTestInterface
 
 /**

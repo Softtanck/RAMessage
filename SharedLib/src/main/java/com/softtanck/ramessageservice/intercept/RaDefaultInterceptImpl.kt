@@ -17,7 +17,7 @@ import com.softtanck.ramessageservice.util.ServerUtil
  * @date 2022/3/23
  * Description: TODO
  */
-internal class RaDefaultIntercept : RaResponseIntercept {
+internal class RaDefaultInterceptImpl : IRaResponseIntercept {
 
     companion object {
         private const val TAG = "RaDefaultIntercept"
@@ -25,7 +25,7 @@ internal class RaDefaultIntercept : RaResponseIntercept {
 
     override fun intercept(raChain: RaChain, message: Message, isSyncCall: Boolean): Message? {
         try {
-            val serBundle: Bundle? = message.data?.apply { classLoader = this@RaDefaultIntercept.javaClass.classLoader }
+            val serBundle: Bundle? = message.data?.apply { classLoader = this@RaDefaultInterceptImpl.javaClass.classLoader }
             if (serBundle == null) {
                 return raChain.proceed(message, isSyncCall)
             } else {

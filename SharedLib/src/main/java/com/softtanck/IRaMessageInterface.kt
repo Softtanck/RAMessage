@@ -6,4 +6,4 @@ package com.softtanck
  * @date 2022/7/15
  * Description: TODO
  */
-abstract interface RaMessageInterface
+abstract interface IRaMessageInterface
