@@ -16,7 +16,7 @@
 - 混淆 👍
 ## 如何使用
 ```kotlin
-implementation 'com.github.Softtanck:RAMessage:0.1.1'
+implementation 'com.github.Softtanck:RAMessage:0.1.2'
 ```
 ### 客户端
 1. 先在客户端定义想要IPC的接口；
