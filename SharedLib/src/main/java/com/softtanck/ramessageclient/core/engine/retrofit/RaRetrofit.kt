@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 internal class RaRetrofit(private val validateEagerly: Boolean) {
     private val serviceMethodCache: MutableMap<Method, ServiceMethod<*>?> = ConcurrentHashMap()
 
+    @Suppress("UNCHECKED_CAST")
     // Single-interface proxy creation guarded by parameter safety.
     fun <T> create(service: Class<T>): T {
         validateServiceInterface(service)
@@ -25,7 +26,7 @@ internal class RaRetrofit(private val validateEagerly: Boolean) {
                         return method.invoke(this, *args!!)
                     }
                     val platform = Platform.get()
-                    return if (platform.isDefaultMethod(method)) platform.invokeDefaultMethod(method, service, proxy, *(args ?: emptyArgs)) else loadServiceMethod(method)!!.invoke(args)
+                    return if (platform.isDefaultMethod(method)) platform.invokeDefaultMethod(method, service, proxy, *(args ?: emptyArgs)) else loadServiceMethod(method)?.invoke(args)
                 }
             }) as T
     }
