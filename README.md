@@ -1,3 +1,164 @@
+# 🔥🔥🔥A lightweight cross-process communication component on Android, Java && Kotlin(Coroutines) both supported.
+A lightweight cross-process communication component on Android。（All versions are supported，only 98kb）![RUNOOB 图标](https://jitpack.io/v/Softtanck/RAMessage.svg)
+- Kotlin 👍
+- Java 👍
+- Android 4+ 👍
+- Sync Call 👍
+- Async Call 👍
+- Coroutines 👍
+- Thread-Safe 👍
+- On-To-Many 👍
+- Client<->Service 👍
+- Method's Parameters：1、Basic type；2、Object which is implemented Parcelable；3、```List<out Parcelable>```；4、```List<out String>```；5、```List<out Int>```；6、```List<out Charsequence>``` 👍
+- Automatic reconnection 👍
+- Notify Message 👍
+- Exception control （WIP）
+- Proguard 👍
+## How to use
+```kotlin
+implementation 'com.github.Softtanck:RAMessage:1.0.0'
+```
+### Client
+1. Defined the interface at client side；
+```kotlin
+interface RaTestInterface : IRaMessageInterface {
+    fun getAFood(): Food?
+    fun getAFoodWithParameter(foodName: String): Food?
+    fun getAllFoods(): List<Food>?
+    fun eatFood()
+    fun buyFood(): Boolean
+    fun getFoodName(): String
+    fun setFoodName(foodName: String): String
+    
+    suspend fun suspendBuyFood(): Boolean?
+    suspend fun suspendGetFood(): Food?
+}
+```
+2. Use method of ```RaClientApi.INSTANCE.create(RaTestInterface::class.java)``` after bind is successful；
+#### Client simple
+```kotlin
+RaClientApi.INSTANCE.bindRaConnectionService(this, ComponentName("com.softtanck.ramessageservice", "com.softtanck.ramessageservice.RaConnectionService"), object : BindStateListener {
+    override fun onConnectedToRaServices() {
+        Log.d(TAG, "connectedToRaServices: $this")
+        val testInterface = RaClientApi.INSTANCE.create(RaTestInterface::class.java)
+        var remoteFood: Food? = null
+        // 1. Get a food from other process
+        remoteFood = testInterface.getAFood()
+        Log.d(TAG, "getAFood result: $remoteFood")
+
+        // 2. Get a food with parameter
+        remoteFood = testInterface.getAFoodWithParameter("Banana")
+        Log.d(TAG, "getAFoodWithParameter: $remoteFood")
+
+        // 3. Get all foods
+        val allFoods = testInterface.getAllFoods()
+        Log.d(TAG, "getAllFoods: $allFoods, ${allFoods?.size}")
+
+        // 4. Eat food
+        testInterface.eatFood()
+
+        // 5. Buy a food
+        val buyFoodResult = testInterface.buyFood()
+        Log.d(TAG, "buyFood: $buyFoodResult")
+
+        // 6. Get a food name
+        val foodName = testInterface.getFoodName()
+        Log.d(TAG, "getFoodName: $foodName")
+
+        // 7. Set food name
+        val changedFoodName = testInterface.setFoodName("Pear")
+        Log.d(TAG, "setFoodName: $changedFoodName")
+
+        // 8. Suspend
+        lifecycleScope.launch(Dispatchers.IO) {
+
+            // 8.1 buy food
+            val suspendBuyFoodResult = testInterface.suspendBuyFood()
+            Log.d(TAG, "suspendBuyFood: $suspendBuyFoodResult")
+
+            // 8.2 get food
+            val suspendGetFood = testInterface.suspendGetFood()
+            Log.d(TAG, "suspendGetFood: $suspendGetFood")
+
+        }
+
+    }
+
+    override fun onConnectRaServicesFailed() {
+        Log.d(TAG, "onConnectRaServicesFailed: ")
+    }
+
+    override fun onDisconnectedFromRaServices(@DisconnectedReason disconnectedReason: Int) {
+        Log.d(TAG, "disconnectedFromRaServices: $disconnectedReason")
+    }
+})
+```
+### Service
+1. extend ```BaseConnectionService```
+2. Implement ```RaTestInterface```
+#### Service sample
+```kotlin
+interface MyServerTestFunImpl : RaTestInterface {
+
+    override fun getAFood(): Food? {
+        Log.d(TAG, "[SERVER] getAFood: Service is invoked")
+        return testFood
+    }
+
+    override fun getAFoodWithParameter(foodName: String): Food? {
+        Log.d(TAG, "[SERVER] getAFoodWithParameter: Service is invoked, foodName:$foodName")
+        return testFood.apply {
+            name = foodName
+        }
+    }
+
+    override fun getAllFoods(): List<Food>? {
+        Log.d(TAG, "[SERVER] getAllFoods")
+        return mutableListOf<Food>().apply {
+            repeat(10) {
+                add(testFood)
+            }
+        }
+    }
+
+    override fun eatFood() {
+        Log.d(TAG, "[SERVER] eatFood")
+    }
+
+    override fun buyFood(): Boolean {
+        Log.d(TAG, "[SERVER] buyFood")
+        return true
+    }
+
+    override fun getFoodName(): String {
+        Log.d(TAG, "[SERVER] getFoodName")
+        return testFood.name
+    }
+
+    override fun setFoodName(foodName: String): String {
+        Log.d(TAG, "[SERVER] setFoodName: $foodName")
+        return testFood.name
+    }
+
+    override suspend fun suspendBuyFood(): Boolean {
+        Log.d(TAG, "[SERVER] suspendBuyFood")
+        return true
+    }
+
+    override suspend fun suspendGetFood(): Food {
+        Log.d(TAG, "[SERVER] suspendGetFood")
+        return testFood
+    }
+}
+```
+# Proguard
+```
+-keep class * extends com.softtanck.IRaMessageInterface { *;}
+-keep interface * extends com.softtanck.IRaMessageInterface { *;}
+-keep class com.softtanck.ramessageclient.core.engine.retrofit.RemoteServiceMethod { *; }
+-keep class com.softtanck.ramessageservice.** { *; }
+```
+
 # 🔥🔥🔥一个高扩展的IPC通信框架，支持Java、Kotlin以及同步调用、异步调用、协程
 一个高可用、高维护、高性能、线程安全的IPC通信框架。（Android全平台支持，仅98kb）![RUNOOB 图标](https://jitpack.io/v/Softtanck/RAMessage.svg)
 - Kotlin 👍
@@ -40,57 +201,57 @@ interface RaTestInterface : IRaMessageInterface {
 // 1. 提供被绑定的远程服务器名字；2. 在绑定成功后，调用远程服务即可；
 RaClientApi.INSTANCE.bindRaConnectionService(this, ComponentName("com.softtanck.ramessageservice", "com.softtanck.ramessageservice.RaConnectionService"), object : BindStateListener {
     override fun onConnectedToRaServices() {
-        Log.d("~~~", "connectedToRaServices: $this")
+        Log.d(TAG, "connectedToRaServices: $this")
         val testInterface = RaClientApi.INSTANCE.create(RaTestInterface::class.java)
         var remoteFood: Food? = null
         // 1. Get a food from other process
         remoteFood = testInterface.getAFood()
-        Log.d("~~~", "getAFood result: $remoteFood")
+        Log.d(TAG, "getAFood result: $remoteFood")
 
         // 2. Get a food with parameter
         remoteFood = testInterface.getAFoodWithParameter("Banana")
-        Log.d("~~~", "getAFoodWithParameter: $remoteFood")
+        Log.d(TAG, "getAFoodWithParameter: $remoteFood")
 
         // 3. Get all foods
         val allFoods = testInterface.getAllFoods()
-        Log.d("~~~", "getAllFoods: $allFoods, ${allFoods?.size}")
+        Log.d(TAG, "getAllFoods: $allFoods, ${allFoods?.size}")
 
         // 4. Eat food
         testInterface.eatFood()
 
         // 5. Buy a food
         val buyFoodResult = testInterface.buyFood()
-        Log.d("~~~", "buyFood: $buyFoodResult")
+        Log.d(TAG, "buyFood: $buyFoodResult")
 
         // 6. Get a food name
         val foodName = testInterface.getFoodName()
-        Log.d("~~~", "getFoodName: $foodName")
+        Log.d(TAG, "getFoodName: $foodName")
 
         // 7. Set food name
         val changedFoodName = testInterface.setFoodName("Pear")
-        Log.d("~~~", "setFoodName: $changedFoodName")
+        Log.d(TAG, "setFoodName: $changedFoodName")
 
         // 8. Suspend
         lifecycleScope.launch(Dispatchers.IO) {
 
             // 8.1 buy food
             val suspendBuyFoodResult = testInterface.suspendBuyFood()
-            Log.d("~~~", "suspendBuyFood: $suspendBuyFoodResult")
+            Log.d(TAG, "suspendBuyFood: $suspendBuyFoodResult")
 
             // 8.2 get food
             val suspendGetFood = testInterface.suspendGetFood()
-            Log.d("~~~", "suspendGetFood: $suspendGetFood")
+            Log.d(TAG, "suspendGetFood: $suspendGetFood")
 
         }
 
     }
 
     override fun onConnectRaServicesFailed() {
-        Log.d("~~~", "onConnectRaServicesFailed: ")
+        Log.d(TAG, "onConnectRaServicesFailed: ")
     }
 
     override fun onDisconnectedFromRaServices(@DisconnectedReason disconnectedReason: Int) {
-        Log.d("~~~", "disconnectedFromRaServices: $disconnectedReason")
+        Log.d(TAG, "disconnectedFromRaServices: $disconnectedReason")
     }
 })
 ```
@@ -102,19 +263,19 @@ RaClientApi.INSTANCE.bindRaConnectionService(this, ComponentName("com.softtanck.
 interface MyServerTestFunImpl : RaTestInterface {
 
     override fun getAFood(): Food? {
-        Log.d("~~~", "[SERVER] getAFood: Service is invoked")
+        Log.d(TAG, "[SERVER] getAFood: Service is invoked")
         return testFood
     }
 
     override fun getAFoodWithParameter(foodName: String): Food? {
-        Log.d("~~~", "[SERVER] getAFoodWithParameter: Service is invoked, foodName:$foodName")
+        Log.d(TAG, "[SERVER] getAFoodWithParameter: Service is invoked, foodName:$foodName")
         return testFood.apply {
             name = foodName
         }
     }
 
     override fun getAllFoods(): List<Food>? {
-        Log.d("~~~", "[SERVER] getAllFoods")
+        Log.d(TAG, "[SERVER] getAllFoods")
         return mutableListOf<Food>().apply {
             repeat(10) {
                 add(testFood)
@@ -123,31 +284,31 @@ interface MyServerTestFunImpl : RaTestInterface {
     }
 
     override fun eatFood() {
-        Log.d("~~~", "[SERVER] eatFood")
+        Log.d(TAG, "[SERVER] eatFood")
     }
 
     override fun buyFood(): Boolean {
-        Log.d("~~~", "[SERVER] buyFood")
+        Log.d(TAG, "[SERVER] buyFood")
         return true
     }
 
     override fun getFoodName(): String {
-        Log.d("~~~", "[SERVER] getFoodName")
+        Log.d(TAG, "[SERVER] getFoodName")
         return testFood.name
     }
 
     override fun setFoodName(foodName: String): String {
-        Log.d("~~~", "[SERVER] setFoodName: $foodName")
+        Log.d(TAG, "[SERVER] setFoodName: $foodName")
         return testFood.name
     }
 
     override suspend fun suspendBuyFood(): Boolean {
-        Log.d("~~~", "[SERVER] suspendBuyFood")
+        Log.d(TAG, "[SERVER] suspendBuyFood")
         return true
     }
 
     override suspend fun suspendGetFood(): Food {
-        Log.d("~~~", "[SERVER] suspendGetFood")
+        Log.d(TAG, "[SERVER] suspendGetFood")
         return testFood
     }
 }
