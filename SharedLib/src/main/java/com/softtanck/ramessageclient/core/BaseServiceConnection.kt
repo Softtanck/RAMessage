@@ -4,7 +4,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
-import android.os.Parcelable
 import android.util.Log
 import com.softtanck.model.RaCustomMessenger
 import com.softtanck.ramessage.IRaMessenger
