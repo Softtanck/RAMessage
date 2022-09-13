@@ -7,6 +7,9 @@
         <package android:name="com.softtanck.ramessageservice" />
     </queries>
 
+
+    <uses-permission android:name="com.softtanck.RaService" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"

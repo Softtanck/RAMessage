@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.softtanck.ramessageservice">
 
+
+    <permission android:name="com.softtanck.RaService"
+        android:protectionLevel="normal" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -22,7 +26,8 @@
         <service
             android:name=".RaConnectionService"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true"
+            android:permission="com.softtanck.RaService" />
     </application>
 
 </manifest>
