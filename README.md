@@ -16,7 +16,7 @@ A lightweight cross-process communication component on Android。（All versions
 - Proguard 👍
 ## How to use
 ```kotlin
-implementation 'com.github.Softtanck:RAMessage:1.0.1'
+implementation 'com.github.Softtanck:RAMessage:1.0.2'
 ```
 ### Client
 1. Defined the interface at client side；
@@ -177,7 +177,7 @@ interface MyServerTestFunImpl : RaTestInterface {
 - 混淆 👍
 ## 如何使用
 ```kotlin
-implementation 'com.github.Softtanck:RAMessage:1.0.1'
+implementation 'com.github.Softtanck:RAMessage:1.0.2'
 ```
 ### 客户端
 1. 先在客户端定义想要IPC的接口；

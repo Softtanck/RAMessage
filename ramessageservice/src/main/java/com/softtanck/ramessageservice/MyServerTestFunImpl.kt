@@ -1,5 +1,6 @@
 package com.softtanck.ramessageservice
 
+import android.os.Message
 import android.util.Log
 import com.shared.model.Food
 import com.softtanck.ramessageservice.ipc.RaTestInterface
@@ -61,6 +62,8 @@ interface MyServerTestFunImpl : RaTestInterface {
 
     override suspend fun suspendGetFood(): Food {
         Log.d("~~~", "[SERVER] suspendGetFood")
+        // You will received the broadcast message in client
+        RaServerApi.INSTANCE.sendBroadcastToAllClients(Message.obtain())
         return testFood
     }
 }
