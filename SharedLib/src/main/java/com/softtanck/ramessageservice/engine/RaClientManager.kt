@@ -61,8 +61,13 @@ internal object RaClientManager {
                     val clientBinder = client.getClientBinder()
                     if (clientBinder != null && clientBinder.isBinderAlive) {
                         try {
-                            client.sendAsyncMessageToClient(Message.obtain(message).apply { what = MESSAGE_CLIENT_SINGLE_RSP })
-                            if (BuildConfig.DEBUG) Log.d(TAG, "[SERVER] Sent response to msg($message) Clients")
+                            client.sendAsyncMessageToClient(Message.obtain(message).apply {
+                                if (message.what != MESSAGE_CLIENT_BROADCAST_RSP) {
+                                    // Only not broadcast message need to change the message type to MESSAGE_CLIENT_SINGLE_RSP
+                                    what = MESSAGE_CLIENT_SINGLE_RSP
+                                }
+                            })
+                            if (BuildConfig.DEBUG) Log.d(TAG, "[SERVER] Sent msg(${message.what},$message) to Clients")
                         } catch (e: RemoteException) {
                             iterator.remove()
                             // The client is dead. Remove it from the list;
