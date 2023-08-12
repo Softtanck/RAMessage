@@ -25,9 +25,8 @@ class MainActivity : AppCompatActivity() {
             override fun onConnectedToRaServices() {
                 Log.d("~~~", "connectedToRaServices: $this")
                 val testInterface = RaClientApi.INSTANCE.create(RaTestInterface::class.java)
-                var remoteFood: Food? = null
                 // 1. Get a food from other process
-                remoteFood = testInterface.getAFood()
+                var remoteFood: Food? = testInterface.getAFood()
                 Log.d("~~~", "getAFood result: $remoteFood")
 
                 // 2. Get a food with parameter
