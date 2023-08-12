@@ -6,11 +6,10 @@ plugins {
 }
 
 android {
-    compileSdkVersion 33
-
     defaultConfig {
         minSdkVersion 23
-        targetSdkVersion 33
+        compileSdk 33
+        buildToolsVersion = "33.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -29,6 +28,10 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    buildFeatures {
+        aidl true
+    }
+    namespace 'com.softtanck.sharedlib'
 }
 
 afterEvaluate {
@@ -39,7 +42,7 @@ afterEvaluate {
                 from components.release
                 groupId = 'com.softtanck.ramessage'
                 artifactId = 'RaMessage'
-                version = '1.0.2'
+                version = '1.0.3'
             }
         }
     }
@@ -47,5 +50,7 @@ afterEvaluate {
 
 dependencies {
     implementation 'androidx.core:core-ktx:1.10.1'
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1"
+    // androidx.test
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
 }

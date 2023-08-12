@@ -1,5 +1,6 @@
 package com.softtanck.ramessageservice.engine
 
+import android.os.Build
 import android.os.Message
 import android.os.Parcelable
 import android.os.RemoteException
@@ -33,7 +34,12 @@ internal object RaClientManager {
         synchronized(clients) {
             Log.d(TAG, "[SERVER] RaServerHandler handleMessage: MESSAGE_REGISTER_CLIENT_REQ, msg.sendingUid:${msg.sendingUid}")
             val dataFromClient = msg.data.apply { classLoader = this@RaClientManager.javaClass.classLoader }
-            val tempRaClient = RaClient(msg.sendingUid, dataFromClient.getParcelable<Parcelable>(MESSAGE_BUNDLE_REPLY_TO_KEY) as? RaCustomMessenger ?: msg.replyTo)
+            val tempRaClient = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                RaClient(msg.sendingUid, dataFromClient.getParcelable(MESSAGE_BUNDLE_REPLY_TO_KEY, Parcelable::class.java) as? RaCustomMessenger ?: msg.replyTo)
+            } else {
+                @Suppress("DEPRECATION")
+                RaClient(msg.sendingUid, dataFromClient.getParcelable<Parcelable>(MESSAGE_BUNDLE_REPLY_TO_KEY) as? RaCustomMessenger ?: msg.replyTo)
+            }
             clients.add(tempRaClient)
             try {
                 tempRaClient.sendAsyncMessageToClient(Message.obtain(null, MESSAGE_REGISTER_CLIENT_RSP))

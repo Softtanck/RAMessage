@@ -1,5 +1,6 @@
 package com.softtanck.ramessageservice.intercept
 
+import android.os.Build
 import android.os.Bundle
 import android.os.Message
 import android.os.Parcelable
@@ -32,9 +33,19 @@ internal class RaDefaultInterceptImpl : IRaResponseIntercept {
                 val remoteMethodName = serBundle.getString(MESSAGE_BUNDLE_METHOD_NAME_KEY)
                 if (TextUtils.isEmpty(remoteMethodName)) return raChain.proceed(message, isSyncCall)
                 Log.d(TAG, "[SERVER] remoteMethodName:$remoteMethodName, thread:${Thread.currentThread()}")
-                val requestParameters: ArrayList<RaRequestTypeParameter> = serBundle.getParcelableArrayList<RaRequestTypeParameter>(MESSAGE_BUNDLE_TYPE_PARAMETER_KEY) as ArrayList<RaRequestTypeParameter>
+                val requestParameters: ArrayList<RaRequestTypeParameter> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    serBundle.getParcelableArrayList(MESSAGE_BUNDLE_TYPE_PARAMETER_KEY, RaRequestTypeParameter::class.java) as ArrayList<RaRequestTypeParameter>
+                } else {
+                    @Suppress("DEPRECATION")
+                    serBundle.getParcelableArrayList<RaRequestTypeParameter>(MESSAGE_BUNDLE_TYPE_PARAMETER_KEY) as ArrayList<RaRequestTypeParameter>
+                }
                 val loadServiceMethod = ServerUtil.loadServiceMethod(remoteMethodName!!, requestParameters, raChain.baseConnectionService)
-                val requestArgs: ArrayList<Parcelable> = serBundle.getParcelableArrayList<Parcelable>(MESSAGE_BUNDLE_TYPE_ARG_KEY) as ArrayList<Parcelable>
+                val requestArgs: ArrayList<Parcelable> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    serBundle.getParcelableArrayList(MESSAGE_BUNDLE_TYPE_ARG_KEY, Parcelable::class.java) as ArrayList<Parcelable>
+                } else {
+                    @Suppress("DEPRECATION")
+                    serBundle.getParcelableArrayList<Parcelable>(MESSAGE_BUNDLE_TYPE_ARG_KEY) as ArrayList<Parcelable>
+                }
                 if (loadServiceMethod == null) {
                     Log.e(TAG, "[SERVER] loadServiceMethod is null")
                     return raChain.proceed(message, isSyncCall)
