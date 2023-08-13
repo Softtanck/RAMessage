@@ -1,5 +1,6 @@
 package com.softtanck.ramessageclient.core.engine.retrofit;
 
+import android.content.ComponentName;
 import android.os.Parcelable;
 import android.util.Log;
 
@@ -25,7 +26,7 @@ abstract class RemoteServiceMethod<ReturnT> extends ServiceMethod<ReturnT> {
 
     private static final String TAG = RemoteServiceMethod.class.getSimpleName();
 
-    static <ReturnT> RemoteServiceMethod<ReturnT> parseAnnotations(Method method, RequestFactory requestFactory) {
+    static <ReturnT> RemoteServiceMethod<ReturnT> parseAnnotations(ComponentName componentName, Method method, RequestFactory requestFactory) {
         boolean isKotlinSuspendFunction = requestFactory.isKotlinSuspendFunction;
         boolean methodHasReturnValue = Utils.hasReturnValueType(method, method.getGenericReturnType());
 
@@ -35,14 +36,13 @@ abstract class RemoteServiceMethod<ReturnT> extends ServiceMethod<ReturnT> {
             methodHasReturnValue = Utils.hasReturnValueType(method, responseType);
         }
         if (isKotlinSuspendFunction) {
-            return new SuspendAdapted<>(method);
+            return new SuspendAdapted<>(componentName, method);
         } else {
-            return new CallAdapted<>(method, methodHasReturnValue);
+            return new CallAdapted<>(componentName, method, methodHasReturnValue);
         }
     }
 
-    protected abstract @Nullable
-    ReturnT adapt(Object[] args);
+    protected abstract @Nullable ReturnT adapt(Object[] args);
 
     @Nullable
     @Override
@@ -53,9 +53,11 @@ abstract class RemoteServiceMethod<ReturnT> extends ServiceMethod<ReturnT> {
     static final class SuspendAdapted<ReturnT, T extends Parcelable> extends RemoteServiceMethod<ReturnT> {
 
         private final Method method;
+        private final ComponentName componentName;
 
-        SuspendAdapted(Method method) {
+        SuspendAdapted(ComponentName componentName, Method method) {
             this.method = method;
+            this.componentName = componentName;
         }
 
         @SuppressWarnings("unchecked")
@@ -80,7 +82,7 @@ abstract class RemoteServiceMethod<ReturnT> extends ServiceMethod<ReturnT> {
             Log.d(TAG, "[CLIENT] Start the remote methods, methodName:" + method.getName() + ", parameters.size:" + parameters.size() + ", argsList.size:" + argsList.size());
             // See SuspendForBody for explanation about this try/catch.
             try {
-                return (ReturnT) KotlinExtensions.awaitResponse(method.getName(), parameters, argsList, continuation);
+                return (ReturnT) KotlinExtensions.awaitResponse(componentName, method.getName(), parameters, argsList, continuation);
             } catch (Exception e) {
                 return (ReturnT) KotlinExtensions.suspendAndThrow(e, continuation);
             }
@@ -90,13 +92,15 @@ abstract class RemoteServiceMethod<ReturnT> extends ServiceMethod<ReturnT> {
     static final class CallAdapted<ReturnT, T extends Parcelable> extends RemoteServiceMethod<ReturnT> {
 
         private final Method method;
+        private final ComponentName componentName;
         private final Boolean methodHasReturnValue;
         private final ArrayList<RaRequestTypeParameter> parameters = new ArrayList<>();
         private final ArrayList<T> argsList = new ArrayList<>();
 
-        CallAdapted(Method method, Boolean methodHasReturnValue) {
+        CallAdapted(ComponentName componentName, Method method, Boolean methodHasReturnValue) {
             this.method = method;
             this.methodHasReturnValue = methodHasReturnValue;
+            this.componentName = componentName;
         }
 
         @SuppressWarnings("unchecked")
@@ -119,10 +123,10 @@ abstract class RemoteServiceMethod<ReturnT> extends ServiceMethod<ReturnT> {
             }
             Log.d(TAG, "[CLIENT] Start the remote methods, methodName:" + method.getName() + ", parameters.size:" + parameters.size() + ", argsList.size:" + argsList.size());
             if (!methodHasReturnValue) {
-                RaClientApi.getINSTANCE().remoteMethodCallAsync(method.getName(), parameters, argsList);
+                RaClientApi.getINSTANCE().remoteMethodCallAsync(componentName, method.getName(), parameters, argsList);
                 return null;
             } else {
-                Object returnValue = RaClientApi.getINSTANCE().remoteMethodCallSync(method.getName(), parameters, argsList);
+                Object returnValue = RaClientApi.getINSTANCE().remoteMethodCallSync(componentName, method.getName(), parameters, argsList);
                 if (returnValue != null) {
                     return (ReturnT) returnValue;
                 } else {

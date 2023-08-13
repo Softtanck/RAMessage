@@ -18,6 +18,7 @@
 
 package com.softtanck.ramessageclient.core.engine.retrofit
 
+import android.content.ComponentName
 import android.os.Parcelable
 import com.softtanck.model.RaRequestTypeParameter
 import com.softtanck.ramessageclient.RaClientApi
@@ -33,12 +34,19 @@ import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-suspend fun <T, F : Parcelable> awaitResponse(methodName: String, parameters: ArrayList<RaRequestTypeParameter>, argsList: ArrayList<F>): T? =
+/**
+ * Invoke the normal or suspend method
+ * @param componentName The component name of the remote service
+ * @param methodName The method name of the remote service
+ * @param parameterTypes The parameters of the remote service. used to find the method
+ * @param argsList The arguments of the remote service
+ */
+suspend fun <T, F : Parcelable> awaitResponse(componentName: ComponentName, methodName: String, parameterTypes: ArrayList<RaRequestTypeParameter>, argsList: ArrayList<F>): T? =
     suspendCancellableCoroutine { continuation ->
         continuation.invokeOnCancellation {
             // TODO : Remove?
         }
-        RaClientApi.INSTANCE.remoteMethodCallAsync(methodName, parameters, argsList) { message ->
+        RaClientApi.INSTANCE.remoteMethodCallAsync(componentName = componentName, remoteMethodName = methodName, remoteMethodParameterTypes = parameterTypes, args = argsList) { message ->
             if (continuation.isActive) continuation.resume(ResponseHandler.makeupMessageForRsp(message))
         }
     }

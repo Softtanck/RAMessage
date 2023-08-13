@@ -1,11 +1,23 @@
 package com.softtanck.ramessageclient.core.engine
 
-import android.os.*
+import android.os.Bundle
+import android.os.Looper
+import android.os.Message
 import android.util.Log
-import com.softtanck.*
+import com.softtanck.MESSAGE_BUNDLE_REPLY_TO_KEY
+import com.softtanck.MESSAGE_CLIENT_BROADCAST_RSP
+import com.softtanck.MESSAGE_CLIENT_DISCONNECT_REQ
+import com.softtanck.MESSAGE_CLIENT_SINGLE_REQ
+import com.softtanck.MESSAGE_CLIENT_SINGLE_RSP
+import com.softtanck.MESSAGE_REGISTER_CLIENT_REQ
+import com.softtanck.MESSAGE_REGISTER_CLIENT_RSP
 import com.softtanck.model.RaCustomMessenger
-import com.softtanck.ramessage.IRaMessenger
-import com.softtanck.ramessageclient.core.listener.*
+import com.softtanck.ramessageclient.core.listener.ClientListenerManager
+import com.softtanck.ramessageclient.core.listener.DisconnectedReason
+import com.softtanck.ramessageclient.core.listener.RA_DISCONNECTED_ABNORMAL
+import com.softtanck.ramessageclient.core.listener.RA_DISCONNECTED_MANUAL
+import com.softtanck.ramessageclient.core.listener.RaRemoteMessageListener
+import com.softtanck.ramessageclient.core.model.RaClientBindStatus
 import com.softtanck.ramessageclient.core.util.LockHelper
 
 /**
@@ -13,42 +25,10 @@ import com.softtanck.ramessageclient.core.util.LockHelper
  * @date 2022/3/12
  * Description: TODO
  */
-internal class RaClientHandler(looper: Looper) : BaseClientHandler(looper) {
+internal class RaClientHandler(looper: Looper, private val raClientBindStatus: RaClientBindStatus) : BaseClientHandler(looper, raClientBindStatus) {
 
     companion object {
         private val TAG: String = RaClientHandler::class.java.simpleName
-        private val workThreadHandler = HandlerThread(TAG)
-        private val inBoundMessenger: Parcelable
-
-        @JvmStatic
-        val INSTANCE: RaClientHandler by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-            // 1. Let the background thread started
-            if (!workThreadHandler.isAlive) workThreadHandler.start()
-            // 2. Use the looper from above
-            RaClientHandler(workThreadHandler.looper)
-        }.apply {
-            // 3. Remember create an inBoundMessenger
-            inBoundMessenger = RaCustomMessenger(this.value)
-        }
-    }
-
-    /**
-     * Set an outbound's messenger from outside
-     * @param outBoundMessenger the outBoundMessenger from server
-     */
-    @Synchronized
-    fun setOutBoundMessenger(outBoundMessenger: IRaMessenger?) {
-        outputMessenger = outBoundMessenger
-    }
-
-    fun getInBoundMessenger() = inBoundMessenger
-
-    fun clientIsBoundStatus() = clientBoundStatus.get()
-
-    private fun makeClientBoundStatusUseCAS(isBound: Boolean) {
-        // Make sure the bind is changed success!!!
-        @Suppress("ControlFlowWithEmptyBody")
-        while (!clientBoundStatus.compareAndSet(clientBoundStatus.get(), isBound));
     }
 
     override fun handleMessage(msg: Message) {
@@ -57,11 +37,12 @@ internal class RaClientHandler(looper: Looper) : BaseClientHandler(looper) {
             MESSAGE_REGISTER_CLIENT_RSP -> {
                 onBindStatusChanged(true)
             }
+
             MESSAGE_CLIENT_SINGLE_RSP -> {
                 Log.d(TAG, "[CLIENT] Received a new msg from server: $msg, trxID: ${msg.arg1}")
                 singleCallbacks.get(msg.arg1)?.run {
                     // 1. first is the callback needs to be called
-                    get()?.onMessageArrived(msg)
+                    get()?.onMessageArrived(message = msg)
                     // 2. then remove the callback from the map
                     clear()
                 }
@@ -70,11 +51,11 @@ internal class RaClientHandler(looper: Looper) : BaseClientHandler(looper) {
                     singleCallbacks.remove(msg.arg1)
                 }
             }
+
             MESSAGE_CLIENT_BROADCAST_RSP -> {
                 Log.d(TAG, "[CLIENT] Received a new msg(broadcast) from server: $msg")
-                broadcastCallbacks.forEachIndexed { _, callback ->
-                    // 1. first is the callback needs to be called
-                    callback.get()?.onMessageArrived(msg)
+                ClientListenerManager.INSTANCE.getAllRemoteBroadCastMessageCallbacks(raClientBindStatus.componentName).forEach { callback ->
+                    callback.onMessageArrived(message = msg)
                 }
             }
         }
@@ -83,14 +64,14 @@ internal class RaClientHandler(looper: Looper) : BaseClientHandler(looper) {
     fun onBindStatusChanged(isConnected: Boolean, @DisconnectedReason disconnectedReason: Int = RA_DISCONNECTED_ABNORMAL) {
         Log.d(TAG, "[CLIENT] onBindStatusChanged: $isConnected, $disconnectedReason")
         if (isConnected) {
-            if (!clientBoundStatus.get()) {
+            if (!raClientBindStatus.bindStatus.value) {
                 synchronized(LockHelper.BIND_RESULT_OBJ_LOCK) {
-                    if (!clientBoundStatus.get()) { // Double check here
-                        makeClientBoundStatusUseCAS(true)
-                        val iterator = BindStateListenerManager.INSTANCE.getAllListener().iterator()
+                    if (!raClientBindStatus.bindStatus.value) { // Double check here
+                        raClientBindStatus.bindStatus.value = true
+                        val iterator = ClientListenerManager.INSTANCE.getAllBindStatusChangedListener(raClientBindStatus.componentName).iterator()
                         while (iterator.hasNext()) {
                             val bindStateListener = iterator.next()
-                            bindStateListener.onConnectedToRaServices()
+                            bindStateListener.onConnectedToRaServices(raClientBindStatus.componentName)
                         }
                     } else {
                         Log.w(TAG, "[CLIENT] Already scheduled, Ignore this request, isConnected: $isConnected, Thread:${Thread.currentThread()}")
@@ -101,28 +82,23 @@ internal class RaClientHandler(looper: Looper) : BaseClientHandler(looper) {
                 Log.w(TAG, "[CLIENT] It looks like you should not going here. Thread:${Thread.currentThread()}")
             }
         } else {
-            if (clientBoundStatus.get()) {
+            if (raClientBindStatus.bindStatus.value) {
                 synchronized(LockHelper.BIND_RESULT_OBJ_LOCK) {
-                    if (clientBoundStatus.get()) { // Double check here
-                        makeClientBoundStatusUseCAS(false)
-                        val iterator = BindStateListenerManager.INSTANCE.getAllListener().iterator()
+                    if (raClientBindStatus.bindStatus.value) { // Double check here
+                        raClientBindStatus.bindStatus.value = false
+                        val iterator = ClientListenerManager.INSTANCE.getAllBindStatusChangedListener(raClientBindStatus.componentName).iterator()
                         while (iterator.hasNext()) {
-                            val bindStateListener = iterator.next()
-                            bindStateListener.onDisconnectedFromRaServices(disconnectedReason)
+                            val bindStatusListener = iterator.next()
+                            bindStatusListener.onDisconnectedFromRaServices(componentName = raClientBindStatus.componentName, disconnectedReason = disconnectedReason)
                         }
                     } else {
-                        Log.w(TAG, "[CLIENT] Already scheduled, Ignore this request, isConnected: $isConnected, Thread:${Thread.currentThread()}")
+                        Log.w(TAG, "[CLIENT] Already scheduled, Ignore this request, isConnected: true, Thread:${Thread.currentThread()}")
                     }
                     // finally, clear the singleCallbacks and broadcastCallbacks
-                    synchronized(singleCallbacks) {
-                        singleCallbacks.clear()
-                    }
-                    synchronized(broadcastCallbacks) {
-                        broadcastCallbacks.clear()
-                    }
+                    clearAllCallbacks()
                 }
             } else {
-                makeClientBoundStatusUseCAS(false)
+                raClientBindStatus.bindStatus.value = false
             }
         }
     }
@@ -135,7 +111,7 @@ internal class RaClientHandler(looper: Looper) : BaseClientHandler(looper) {
      * @param message the message to send
      */
     private fun sendMsgToServiceCompat(message: Message) {
-        if (outputMessenger != null && outputMessenger is RaCustomMessenger) {
+        if (outputMessengerStateFlow.value != null && outputMessengerStateFlow.value is RaCustomMessenger) {
             sendSyncMessageToServer(message)
         } else {
             sendMsgToServerAsync(message)
@@ -154,10 +130,19 @@ internal class RaClientHandler(looper: Looper) : BaseClientHandler(looper) {
 
     fun sendMsgToServerSync(message: Message): Message? = sendSyncMessageToServer(message.apply { what = MESSAGE_CLIENT_SINGLE_REQ })
 
+    fun sendRegisterMsgToServer(inputMessenger: RaCustomMessenger) = notSafetySendAsyncMessageToServer(message = Message.obtain(null, MESSAGE_REGISTER_CLIENT_REQ).apply {
+        // replyTo inputMessenger as Messenger if the client is failed to reflect the messenger.
+        data = Bundle().apply {
+            putParcelable(MESSAGE_BUNDLE_REPLY_TO_KEY, inputMessenger)
+        }
+    })
+
     override fun onRemoteMessageArrived(msg: Message, isSync: Boolean): Message? {
-        TODO("Not yet implemented")
+        //TODO("Not yet implemented")
         // TODO : 跟服务端一样的实现。不过要反着来：
         //  即： 服务端动态代理接口，然后获取参数类型、参数、函数名字后，通过IPC调用，把相关参数传递给客户端，客户端通过「反射」执行对应返回并同步返回；
         //  那么异步情况如何处理？
+        return null
     }
+
 }

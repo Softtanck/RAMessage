@@ -14,7 +14,7 @@ internal class RaServerHandler internal constructor(looper: Looper, private val 
         Log.d(TAG, "[SERVER] RaServerHandler handleMessage: ${msg.what}")
         when (msg.what) {
             MESSAGE_REGISTER_CLIENT_REQ -> {
-                RaClientManager.registerClientFromBinderWithMessage(msg)
+                RaClientManager.registerClientFromBinderWithMessage(serviceKey = baseConnectionService.javaClass.name, msg = msg)
             }
             MESSAGE_CLIENT_SINGLE_REQ -> {
                 baseConnectionService.onRemoteMessageArrived(msg, false)

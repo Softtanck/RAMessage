@@ -7,7 +7,7 @@ A lightweight cross-process communication component on Android。（All versions
 - Async Call 👍
 - Coroutines 👍
 - Thread-Safe 👍
-- On-To-Many 👍
+- Many-To-Many 👍
 - Client<->Service 👍
 - Method's Parameters：1、Basic type；2、Object which is implemented Parcelable；3、```List<out Parcelable>```；4、```List<out String>```；5、```List<out Int>```；6、```List<out Charsequence>``` 👍
 - Automatic reconnection 👍
@@ -16,7 +16,7 @@ A lightweight cross-process communication component on Android。（All versions
 - Proguard 👍
 ## How to use
 ```kotlin
-implementation 'com.github.Softtanck:RAMessage:1.0.3'
+implementation 'com.github.Softtanck:RAMessage:2.0.0-RC1'
 ```
 ### Client
 1. Defined the interface at client side；
@@ -168,7 +168,7 @@ interface MyServerTestFunImpl : RaTestInterface {
 - 异步调用 👍
 - 协程 👍
 - 线程安全 👍
-- 一个服务端对多客户端 👍
+- 多个客户端对多个服务端 👍
 - 双向发送和实现 👍（双端支持发送和接收：同步、异步；）
 - 支持接口参数、返回参数为：1、基本类型；2、实现了Parcelable的对象；3、```List<out Parcelable>```；4、```List<out String>```；5、```List<out Int>```；6、```List<out Charsequence>``` 👍
 - 客户端连接异常断开自动重连 👍
@@ -177,7 +177,7 @@ interface MyServerTestFunImpl : RaTestInterface {
 - 混淆 👍
 ## 如何使用
 ```kotlin
-implementation 'com.github.Softtanck:RAMessage:1.0.3'
+implementation 'com.github.Softtanck:RAMessage:2.0.0-RC1'
 ```
 ### 客户端
 1. 先在客户端定义想要IPC的接口；
@@ -316,7 +316,7 @@ interface MyServerTestFunImpl : RaTestInterface {
 ## 一些说明
 - 推荐使用协程的方式调用；
 - 自定义的参数中的对象或函数返回值对象不能被混淆；
-- 自定义对象必须实现Parcelable接口；
+- 自定义的参数是对象时，该对象必须实现Parcelable接口；
 - 接口带有返回值是「同步」调用，不带返回值是「异步」调用；
 - 如果项目支持 协程，无论是否带返回值的接口都支持「异步」调用；
 - 当接口带有返回值时，调用方需要考虑调用同步方法的时候的线程防止出现ANR（协程不需要考虑）；
@@ -331,7 +331,7 @@ interface MyServerTestFunImpl : RaTestInterface {
 ```
 # Licence
 ```
-Copyright 2022 Softtanck.
+Copyright 2023 Softtanck.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at

@@ -17,24 +17,26 @@ import kotlin.coroutines.Continuation
  */
 internal object ServerUtil {
 
-    private val serviceMethodCache: MutableMap<String, RaRemoteMethod> = ConcurrentHashMap()
+    private val serviceMethodCache: MutableMap<String, MutableMap<String, RaRemoteMethod>> = ConcurrentHashMap()
 
     private const val TAG = "ServerUtil"
 
     fun loadServiceMethod(remoteMethodName: String, requestParameters: ArrayList<RaRequestTypeParameter>, baseConnectionService: BaseConnectionService): RaRemoteMethod? {
-        var result = serviceMethodCache[remoteMethodName]
-        if (result != null && isEqual(requestParameters, result.methodRequestParams)) {
+        val targetServiceKey = baseConnectionService.javaClass.name
+        var result = serviceMethodCache[targetServiceKey]?.get(remoteMethodName)
+        val tempRequestParameters = result?.methodRequestParams
+        if (result != null && tempRequestParameters != null && isEqual(requestParameters, tempRequestParameters)) {
             if (BuildConfig.DEBUG) Log.d(TAG, "loadServiceMethod: Use the cached methods")
             return result
         }
         synchronized(serviceMethodCache) {
-            result = serviceMethodCache[remoteMethodName]
+            result = serviceMethodCache[targetServiceKey]?.get(remoteMethodName)
             if (result == null) {
                 try {
                     val remoteMethod: Method = baseConnectionService.javaClass.getDeclaredMethod(remoteMethodName, *Array(requestParameters.size) { requestParameters[it].parameterTypeClasses })
                     remoteMethod.isAccessible = true
                     result = RaRemoteMethod(remoteMethodName, requestParameters, remoteMethod)
-                    serviceMethodCache[remoteMethodName] = result!!
+                    serviceMethodCache[targetServiceKey]?.set(remoteMethodName, result as RaRemoteMethod)
                 } catch (e: NoSuchMethodException) {
                     e.printStackTrace()
                     Log.e(TAG, "loadServiceMethod: remoteMethodName failed to found")

@@ -7,8 +7,12 @@ import android.util.Log
 
 /**
  * Created by Softtanck on 2022/3/12
+ * a client of RaMessageService
+ * @param clientUID client's uid
+ * @param clientMessenger client's messenger
+ * @param serviceKey service's key, used to identify the service
  */
-internal data class RaClient<T : Parcelable>(val clientUID: Int, val clientMessenger: T) {
+internal data class RaClient<T : Parcelable>(val clientUID: Int, val clientMessenger: T, val serviceKey: String) {
 
     private val TAG = this.javaClass.name
 
@@ -24,9 +28,11 @@ internal data class RaClient<T : Parcelable>(val clientUID: Int, val clientMesse
             is RaCustomMessenger -> {
                 clientMessenger.send(message)
             }
+
             is Messenger -> {
                 clientMessenger.send(message)
             }
+
             else -> {
                 Log.e(TAG, "[SERVER] sendConnectionRegisterStateToClient: Unknown client messenger type")
                 throw IllegalArgumentException("Unknown client messenger type")
@@ -39,6 +45,7 @@ internal data class RaClient<T : Parcelable>(val clientUID: Int, val clientMesse
             is RaCustomMessenger -> {
                 clientMessenger.sendSync(message)
             }
+
             else -> {
                 Log.e(TAG, "[SERVER] sendConnectionRegisterStateToClient: Unknown client messenger type, Dropped message:$message")
                 null

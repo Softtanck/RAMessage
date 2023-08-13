@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Softtanck.
+ * Copyright (C) 2023 Softtanck.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.softtanck.ramessageclient
 
 import android.content.ComponentName
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.os.Message
 import android.os.Parcelable
@@ -27,112 +28,139 @@ import com.softtanck.MESSAGE_BUNDLE_TYPE_PARAMETER_KEY
 import com.softtanck.model.RaRequestTypeParameter
 import com.softtanck.ramessageclient.core.BaseServiceConnection
 import com.softtanck.ramessageclient.core.RaServiceConnector
-import com.softtanck.ramessageclient.core.engine.RaClientHandler
 import com.softtanck.ramessageclient.core.engine.retrofit.RaRetrofit
-import com.softtanck.ramessageclient.core.listener.BindStateListener
-import com.softtanck.ramessageclient.core.listener.BindStateListenerManager
+import com.softtanck.ramessageclient.core.listener.BindStatusChangedListener
+import com.softtanck.ramessageclient.core.listener.ClientListenerManager
 import com.softtanck.ramessageclient.core.listener.RaRemoteMessageListener
+import com.softtanck.ramessageclient.core.model.RaClientBindStatus
 import com.softtanck.ramessageclient.core.util.ResponseHandler
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * @author Softtanck
  * @date 2022/3/12
- * Description: [getDefaultComponentName]、[addBindStateListener]、[removeBindStateListener]、[clearAllBindStateListener]、[removeRemoteBroadcastMessageListener]
+ * Description: [getDefaultComponentName]、[addBindStatusListener]、[removeBindStatusListener]、[clearAllBindStatusListener]、[removeRemoteBroadcastMessageListener]
  */
 class RaClientApi private constructor() {
 
-    @Volatile
-    private var _innerRaServiceConnector: BaseServiceConnection? = null
-
     private val raRetrofit by lazy { RaRetrofit(false) }
 
-    // This is a TEST component
     private val _innerDefaultComponentName by lazy { ComponentName(BaseServiceConnection::class.java.`package`?.name ?: "", BaseServiceConnection::class.java.name) }
+
+    private val remoteConnections by lazy { mutableListOf<RaServiceConnector.RaRemoteConnection>() }
 
     companion object {
         @JvmStatic
-        val INSTANCE: RaClientApi by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-            RaClientApi()
-        }
+        val INSTANCE: RaClientApi by lazy { RaClientApi() }
     }
 
     /**
      * Bind a remote service.
      * @param context the context
      * @param componentName the componentName of remote
-     * @param bindStateListener the [BindStateListener]
+     * @param bindStatusChangedListener the [BindStatusChangedListener]
      */
     @JvmOverloads
-    fun bindRaConnectionService(context: Context, componentName: ComponentName, bindStateListener: BindStateListener? = null) {
-        if (_innerRaServiceConnector == null) {
-            synchronized(INSTANCE) {
-                if (_innerRaServiceConnector == null) {
-                    _innerRaServiceConnector = RaServiceConnector(context)
-                }
+    fun bindRaConnectionService(context: Context, componentName: ComponentName, bindStatusChangedListener: BindStatusChangedListener? = null) {
+        val localRaRemoteConnection = remoteConnections.find { it.serviceConnector.raClientBindStatus.componentName == componentName }
+        val localRaServiceConnector = localRaRemoteConnection?.serviceConnector
+        if (localRaServiceConnector == null) {
+            val newLocalRaServiceConnector: RaServiceConnector
+            val newLocalRaRemoteConnection: RaServiceConnector.RaRemoteConnection
+            synchronized(remoteConnections) {
+                newLocalRaServiceConnector = RaServiceConnector(context, RaClientBindStatus(componentName = componentName, bindStatus = MutableStateFlow(false), bindInProgress = MutableStateFlow(false)))
+                newLocalRaRemoteConnection = RaServiceConnector.RaRemoteConnection(serviceConnector = newLocalRaServiceConnector)
+                remoteConnections.add(newLocalRaRemoteConnection)
             }
+            newLocalRaServiceConnector.bindRaConnectionService(componentName = componentName, bindStatusChangedListener = bindStatusChangedListener)
+        } else {
+            localRaServiceConnector.bindRaConnectionService(componentName = componentName, bindStatusChangedListener = bindStatusChangedListener)
         }
-        _innerRaServiceConnector!!.bindRaConnectionService(componentName, bindStateListener)
     }
 
     /**
-     * Unbind the remote service
+     * Unbind the remote service, should be called on background thread.
+     * @param componentName the componentName of remote
      */
-    fun unbindRaConnectionService() {
-        _innerRaServiceConnector?.unbindRaConnectionService()
+    fun unbindRaConnectionService(componentName: ComponentName) {
+        remoteConnections.find { it.serviceConnector.raClientBindStatus.componentName == componentName }?.run {
+            serviceConnector.unbindRaConnectionService()
+            synchronized(remoteConnections) {
+                remoteConnections.remove(this)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    remoteConnections.removeIf { !it.serviceConnector.raClientBindStatus.bindStatus.value }
+                } else {
+                    remoteConnections.removeAll { !it.serviceConnector.raClientBindStatus.bindStatus.value }
+                }
+            }
+            ClientListenerManager.INSTANCE.clearAllBindStatusChangedListener(componentName = componentName)
+        }
     }
 
     fun getDefaultComponentName(): ComponentName = _innerDefaultComponentName
 
     /**
      * Added a bind listener
-     * @param bindStateListener the [BindStateListener]
+     * @param bindStatusChangedListener the [BindStatusChangedListener]
      */
-    fun addBindStateListener(bindStateListener: BindStateListener) {
-        BindStateListenerManager.INSTANCE.add(bindStateListener)
+    fun addBindStatusListener(componentName: ComponentName, bindStatusChangedListener: BindStatusChangedListener) {
+        ClientListenerManager.INSTANCE.addBindStatusChangedListener(componentName, bindStatusChangedListener)
     }
 
     /**
      * Remove a bind listener
-     * @param bindStateListener the [BindStateListener]
+     * @param bindStatusChangedListener the [BindStatusChangedListener]
      */
-    fun removeBindStateListener(bindStateListener: BindStateListener) {
-        BindStateListenerManager.INSTANCE.remove(bindStateListener)
+    fun removeBindStatusListener(componentName: ComponentName, bindStatusChangedListener: BindStatusChangedListener) {
+        ClientListenerManager.INSTANCE.removeBindStatusChangedListener(componentName, bindStatusChangedListener)
     }
 
     /**
      * Clear all bind listeners
      */
-    fun clearAllBindStateListener() {
-        BindStateListenerManager.INSTANCE.clearAll()
+    fun clearAllBindStatusListener() {
+        ClientListenerManager.INSTANCE.clearAllBindStatusChangedListener()
     }
 
     /**
      * Add a remote broadcast message listener
      * @param remoteMessageListener the [RaRemoteMessageListener]
      */
-    fun addRemoteBroadcastMessageListener(remoteMessageListener: RaRemoteMessageListener) {
-        RaClientHandler.INSTANCE.addRemoteBroadCastMessageCallback(remoteMessageListener)
+    fun addRemoteBroadcastMessageListener(componentName: ComponentName, remoteMessageListener: RaRemoteMessageListener) {
+        ClientListenerManager.INSTANCE.addRemoteBroadCastMessageCallback(componentName, remoteMessageListener)
     }
 
     /**
      * Remove a remote broadcast message listener
      */
-    fun removeRemoteBroadcastMessageListener(remoteMessageListener: RaRemoteMessageListener) {
-        RaClientHandler.INSTANCE.removeRemoteBroadCastMessageCallback(remoteMessageListener)
+    fun removeRemoteBroadcastMessageListener(componentName: ComponentName, remoteMessageListener: RaRemoteMessageListener) {
+        ClientListenerManager.INSTANCE.removeRemoteBroadCastMessageCallback(componentName, remoteMessageListener)
     }
 
     /**
      * Clear all remote broadcast message listeners
      */
-    fun clearAllRemoteBroadcastMessageListener() {
-        RaClientHandler.INSTANCE.clearRemoteBroadCastMessageCallbacks()
+    fun clearAllRemoteBroadcastMessageListener(componentName: ComponentName) {
+        ClientListenerManager.INSTANCE.clearAllRemoteBroadCastMessageCallbacks(componentName)
     }
 
     /**
      * Current the client is bound to server.
      * ture bound, otherwise not.
      */
-    fun isBoundToService() = RaClientHandler.INSTANCE.clientIsBoundStatus()
+    fun isBoundToService(componentName: ComponentName) = remoteConnections.find { it.serviceConnector.raClientBindStatus.componentName == componentName }?.serviceConnector?.raClientBindStatus?.bindStatus ?: false
+
+    /**
+     * Destroy all resources.
+     */
+    fun destroyAllResources() {
+        synchronized(remoteConnections) {
+            remoteConnections.forEach { it.serviceConnector.unbindRaConnectionService() }
+            remoteConnections.clear()
+        }
+        ClientListenerManager.INSTANCE.clearAllRemoteBroadCastMessageCallbacks()
+        ClientListenerManager.INSTANCE.clearAllBindStatusChangedListener()
+    }
 
     /**
      * Call a remote method with sync.
@@ -140,8 +168,8 @@ class RaClientApi private constructor() {
      * @param requestParameters the requestParameters.
      * @param requestArgs the requestArgs.
      */
-    fun <T, F : Parcelable> remoteMethodCallSync(remoteMethodName: String, requestParameters: ArrayList<RaRequestTypeParameter>, requestArgs: ArrayList<F>): T? {
-        val msg = RaClientHandler.INSTANCE.sendMsgToServerSync(Message.obtain().apply {
+    fun <T, F : Parcelable> remoteMethodCallSync(componentName: ComponentName, remoteMethodName: String, requestParameters: ArrayList<RaRequestTypeParameter>, requestArgs: ArrayList<F>): T? {
+        val msg = remoteConnections.find { it.serviceConnector.raClientBindStatus.componentName == componentName }?.serviceConnector?.raClientHandler?.sendMsgToServerSync(Message.obtain().apply {
             val bundle = Bundle()
             bundle.putString(MESSAGE_BUNDLE_METHOD_NAME_KEY, remoteMethodName)
             bundle.putParcelableArrayList(MESSAGE_BUNDLE_TYPE_PARAMETER_KEY, requestParameters)
@@ -153,16 +181,18 @@ class RaClientApi private constructor() {
 
     /**
      * Call a remote method with async.
+     * @param componentName the componentName of remote
      * @param remoteMethodName the remote method name.
-     * @param requestParameters the requestParameters.
+     * @param remoteMethodParameterTypes the requestParameters for find the remote method.
      * @param raRemoteMessageListener the [RaRemoteMessageListener], can be NULL.
+     * @param args the requestArgs.
      */
     @JvmOverloads
-    fun <T : Parcelable> remoteMethodCallAsync(remoteMethodName: String, requestParameters: ArrayList<RaRequestTypeParameter>, args: ArrayList<T>, raRemoteMessageListener: RaRemoteMessageListener? = null) {
-        RaClientHandler.INSTANCE.sendMsgToServerAsync(Message.obtain().apply {
+    fun <T : Parcelable> remoteMethodCallAsync(componentName: ComponentName, remoteMethodName: String, remoteMethodParameterTypes: ArrayList<RaRequestTypeParameter>, args: ArrayList<T>, raRemoteMessageListener: RaRemoteMessageListener? = null) {
+        remoteConnections.find { it.serviceConnector.raClientBindStatus.componentName == componentName }?.serviceConnector?.raClientHandler?.sendMsgToServerAsync(Message.obtain().apply {
             val bundle = Bundle()
             bundle.putString(MESSAGE_BUNDLE_METHOD_NAME_KEY, remoteMethodName)
-            bundle.putParcelableArrayList(MESSAGE_BUNDLE_TYPE_PARAMETER_KEY, requestParameters)
+            bundle.putParcelableArrayList(MESSAGE_BUNDLE_TYPE_PARAMETER_KEY, remoteMethodParameterTypes)
             bundle.putParcelableArrayList(MESSAGE_BUNDLE_TYPE_ARG_KEY, args)
             data = bundle
         }, raRemoteMessageListener)
@@ -172,6 +202,6 @@ class RaClientApi private constructor() {
      * Create an implementation of the API endpoints defined by the {@code service} interface.
      * Like retrofit.
      */
-    fun <T : IRaMessageInterface> create(service: Class<T>): T = raRetrofit.create(service)
+    fun <T : IRaMessageInterface> create(componentName: ComponentName, service: Class<T>): T = raRetrofit.create(componentName = componentName, service = service)
 
 }
