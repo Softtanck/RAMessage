@@ -2,7 +2,6 @@ package com.softtanck.ramessageclient.core.listener
 
 import android.content.ComponentName
 import android.os.Build
-import java.lang.ref.WeakReference
 
 /**
  * @author Softtanck
@@ -25,7 +24,7 @@ internal class ClientListenerManager private constructor() {
      * Remember all callbacks from the client. And WeakReference is used as value.
      * That can be void memory leaks here.
      */
-    private val broadcastCallbacks by lazy { mutableListOf<Pair<ComponentName, WeakReference<RaRemoteMessageListener>>>() }
+    private val broadcastCallbacks by lazy { mutableListOf<Pair<ComponentName, RaRemoteMessageListener>>() }
 
     fun addBindStatusChangedListener(componentName: ComponentName, bindStatusChangedListener: BindStatusChangedListener) {
         synchronized(clientsBindStatusChangedListenerList) {
@@ -68,7 +67,7 @@ internal class ClientListenerManager private constructor() {
      */
     fun addRemoteBroadCastMessageCallback(componentName: ComponentName, remoteMessageListener: RaRemoteMessageListener) {
         synchronized(broadcastCallbacks) {
-            broadcastCallbacks.add(Pair(componentName, WeakReference(remoteMessageListener)))
+            broadcastCallbacks.add(Pair(componentName, remoteMessageListener))
         }
     }
 
@@ -78,9 +77,9 @@ internal class ClientListenerManager private constructor() {
     fun removeRemoteBroadCastMessageCallback(componentName: ComponentName, remoteMessageListener: RaRemoteMessageListener) {
         synchronized(broadcastCallbacks) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                broadcastCallbacks.removeIf { it.first == componentName && it.second.get() == remoteMessageListener }
+                broadcastCallbacks.removeIf { it.first == componentName && it.second == remoteMessageListener }
             } else {
-                broadcastCallbacks.removeAll { it.first == componentName && it.second.get() == remoteMessageListener }
+                broadcastCallbacks.removeAll { it.first == componentName && it.second == remoteMessageListener }
             }
         }
     }
@@ -104,5 +103,5 @@ internal class ClientListenerManager private constructor() {
         }
     }
 
-    fun getAllRemoteBroadCastMessageCallbacks(componentName: ComponentName): List<RaRemoteMessageListener> = broadcastCallbacks.filter { it.first == componentName }.mapNotNull { it.second.get() }
+    fun getAllRemoteBroadCastMessageCallbacks(componentName: ComponentName): List<RaRemoteMessageListener> = broadcastCallbacks.filter { it.first == componentName }.map { it.second }
 }
