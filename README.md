@@ -18,7 +18,7 @@ A lightweight cross-process communication component on Android。（All versions
 ## How to use
 
 ```kotlin
-implementation 'com.github.Softtanck:RAMessage:2.0.0-RC1'  
+implementation 'com.github.Softtanck:RAMessage:2.0.0-RC2'  
 ```
 
 ### Client
@@ -191,7 +191,7 @@ interface MyServerTestFunImpl : RaTestInterface {
 ## 如何使用
 
 ```kotlin
-implementation 'com.github.Softtanck:RAMessage:2.0.0-RC1'  
+implementation 'com.github.Softtanck:RAMessage:2.0.0-RC2'  
 ```
 
 ### 客户端
