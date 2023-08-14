@@ -1,6 +1,6 @@
 # 🔥🔥🔥A lightweight cross-process communication component on Android, Kotlin and Coroutines both supported.
 
-A lightweight cross-process communication component on Android。（All versions are supported，only 98kb）![RUNOOB 图标](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/40fd34997a7d4ed8ae313b530d20861b~tplv-k3u1fbpfcp-zoom-1.image)
+A lightweight cross-process communication component on Android。（All versions are supported，only 98kb）![RUNOOB 图标](https://jitpack.io/v/Softtanck/RAMessage.svg)
 
 |           Type           | Supported |
 | :----------------------: | :-------: |
@@ -173,7 +173,7 @@ interface MyServerTestFunImpl : RaTestInterface {
 
 # 🔥🔥🔥一个高性能且线程安全的IPC通信框架，支持Java、Kotlin以及同步调用、异步调用、协程
 
-一个高性能且线程安全的IPC通信框架。（Android全平台支持，仅98kb）![RUNOOB 图标](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/40fd34997a7d4ed8ae313b530d20861b~tplv-k3u1fbpfcp-zoom-1.image)
+一个高性能且线程安全的IPC通信框架。（Android全平台支持，仅98kb）![RUNOOB 图标](https://jitpack.io/v/Softtanck/RAMessage.svg)
 
 |           Type           | Supported |
 | :----------------------: | :-------: |
