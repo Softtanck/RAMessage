@@ -15,17 +15,18 @@
  */
 package com.softtanck.ramessageclient.core.engine.retrofit;
 
+import android.content.ComponentName;
+
 import androidx.annotation.Nullable;
 
 import java.lang.reflect.Method;
 
 abstract class ServiceMethod<T> {
 
-    static <T> ServiceMethod<T> parseAnnotations(Method method) {
+    static <T> ServiceMethod<T> parseAnnotations(ComponentName componentName, Method method) {
         RequestFactory requestFactory = RequestFactory.parseAnnotations(method);
-        return RemoteServiceMethod.parseAnnotations(method, requestFactory);
+        return RemoteServiceMethod.parseAnnotations(componentName, method, requestFactory);
     }
 
-    abstract @Nullable
-    T invoke(Object[] args);
+    abstract @Nullable T invoke(Object[] args);
 }

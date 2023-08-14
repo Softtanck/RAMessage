@@ -4,72 +4,63 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.os.HandlerThread
 import android.util.Log
 import com.softtanck.model.RaCustomMessenger
-import com.softtanck.ramessage.IRaMessenger
 import com.softtanck.ramessageclient.core.engine.RaClientHandler
-import com.softtanck.ramessageclient.core.listener.BindStateListener
-import com.softtanck.ramessageclient.core.listener.BindStateListenerManager
+import com.softtanck.ramessageclient.core.listener.BindStatusChangedListener
+import com.softtanck.ramessageclient.core.listener.ClientListenerManager
+import com.softtanck.ramessageclient.core.model.RaClientBindStatus
 import com.softtanck.ramessageclient.core.util.LockHelper
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * @author Softtanck
  * @date 2022/3/12
  * Description: TODO
  */
-abstract class BaseServiceConnection(val context: Context) : ServiceConnection {
+abstract class BaseServiceConnection(val context: Context, val raClientBindStatus: RaClientBindStatus) : ServiceConnection {
     private val TAG: String = this.javaClass.simpleName
 
-    protected var outBoundMessenger: IRaMessenger? = null
+    private val workThreadHandler = HandlerThread(TAG)
+    internal val raClientHandler by lazy {
+        // Let the background thread started
+        if (!workThreadHandler.isAlive) {
+            workThreadHandler.start()
+        }
+        RaClientHandler(looper = workThreadHandler.looper, raClientBindStatus = raClientBindStatus)
+    }
 
     // The unbind is triggered by manual, Like [unbindRaConnectionService]
     // This flag is for reconnect the service if the IBinder died from server.
-    private val isUnbindTriggeredByManual = AtomicBoolean(false)
-
-    // Current bind is in progress, default is false.
-    private val bindInProgress = AtomicBoolean(false)
-
-    private fun makeBindInProgressUseCAS(isInProgress: Boolean) {
-        // Make sure the bind is changed success!!!
-        @Suppress("ControlFlowWithEmptyBody")
-        while (!bindInProgress.compareAndSet(bindInProgress.get(), isInProgress));
-    }
-
-    private fun makeIsUnbindTriggeredByManualUseCAS(unbindTriggeredByManual: Boolean) {
-        // Make sure the unbind is changed success!!!
-        @Suppress("ControlFlowWithEmptyBody")
-        while (!isUnbindTriggeredByManual.compareAndSet(isUnbindTriggeredByManual.get(), unbindTriggeredByManual));
-    }
-
-    fun isUnbindTriggeredByManual(): Boolean {
-        return isUnbindTriggeredByManual.get()
-    }
+    private val _isUnbindTriggeredByManualStateFlow = MutableStateFlow(false)
+    val isUnbindTriggeredByManualStateFlow = _isUnbindTriggeredByManualStateFlow.asStateFlow()
 
     /**
      * Bind a remote service.
      * @param componentName the componentName
-     * @param bindStateListener the [BindStateListener]
+     * @param bindStatusChangedListener the [BindStatusChangedListener]
      */
-    fun bindRaConnectionService(componentName: ComponentName, bindStateListener: BindStateListener?) {
-        if (bindInProgress.get()) {
+    fun bindRaConnectionService(componentName: ComponentName, bindStatusChangedListener: BindStatusChangedListener?) {
+        if (raClientBindStatus.bindInProgress.value) {
             Log.w(TAG, "[CLIENT] Binding is in progress, Ignore this request. Thread:${Thread.currentThread()}")
             // Add the listener if it is not NULL
-            bindStateListener?.let { BindStateListenerManager.INSTANCE.add(bindStateListener) }
+            bindStatusChangedListener?.let { ClientListenerManager.INSTANCE.addBindStatusChangedListener(componentName = componentName, bindStatusChangedListener = bindStatusChangedListener) }
         } else {
             synchronized(LockHelper.BIND_IN_PROGRESS_OBJ_LOCK) {
-                Log.d(TAG, "[CLIENT] Before CAS bindInProgress:${bindInProgress.get()}, Thread:${Thread.currentThread()}")
-                if (bindInProgress.get()) {
+                Log.d(TAG, "[CLIENT] Before CAS bindInProgress:${raClientBindStatus.bindInProgress.value}, Thread:${Thread.currentThread()}")
+                if (raClientBindStatus.bindInProgress.value) {
                     Log.w(TAG, "[CLIENT] Binding is in progress, Ignore this request. Thread:${Thread.currentThread()}")
                     // Add the listener if it is not NULL
-                    bindStateListener?.let { BindStateListenerManager.INSTANCE.add(bindStateListener) }
+                    bindStatusChangedListener?.let { ClientListenerManager.INSTANCE.addBindStatusChangedListener(componentName = componentName, bindStatusChangedListener = bindStatusChangedListener) }
                     return@synchronized
                 }
                 Log.d(TAG, "[CLIENT] Binding to RaConnectionService. Thread:${Thread.currentThread()}")
                 // Make sure the bind is changed success!!!
-                makeBindInProgressUseCAS(true)
-                Log.d(TAG, "[CLIENT] After CAS bindInProgress:${bindInProgress.get()}, Thread:${Thread.currentThread()}")
-                bindStateListener?.let { BindStateListenerManager.INSTANCE.add(bindStateListener) }
+                raClientBindStatus.bindInProgress.value = true
+                Log.d(TAG, "[CLIENT] After CAS bindInProgress:${raClientBindStatus.bindInProgress.value}, Thread:${Thread.currentThread()}")
+                bindStatusChangedListener?.let { ClientListenerManager.INSTANCE.addBindStatusChangedListener(componentName = componentName, bindStatusChangedListener = bindStatusChangedListener) }
                 val serviceIntent = Intent()
                 serviceIntent.component = componentName
                 serviceIntent.putExtra(RaCustomMessenger.raMsgVersion.first, RaCustomMessenger.raMsgVersion.second)
@@ -99,13 +90,13 @@ abstract class BaseServiceConnection(val context: Context) : ServiceConnection {
                     Log.w(TAG, "[CLIENT] Looks you are missing the permission, ${e.message}")
                 } finally {
                     Log.d(TAG, "[CLIENT] Binding Api results:$bindServiceResult, Thread:${Thread.currentThread()}")
-                    makeBindInProgressUseCAS(false)
-                    makeIsUnbindTriggeredByManualUseCAS(false)
+                    raClientBindStatus.bindInProgress.value = false
+                    _isUnbindTriggeredByManualStateFlow.value = false
                     if (!bindServiceResult) { // Callback the result to user if the action is failed to execute
                         // Use the iterator to avoid CME!!!
-                        val iterator = BindStateListenerManager.INSTANCE.getAllListener().iterator()
+                        val iterator = ClientListenerManager.INSTANCE.getAllBindStatusChangedListener(componentName = componentName).iterator()
                         while (iterator.hasNext()) {
-                            iterator.next().onConnectRaServicesFailed()
+                            iterator.next().onConnectRaServicesFailed(componentName)
                         }
                     }
                 }
@@ -118,19 +109,17 @@ abstract class BaseServiceConnection(val context: Context) : ServiceConnection {
      */
     fun unbindRaConnectionService() {
         // Check current status with bound.
-        if (RaClientHandler.INSTANCE.clientIsBoundStatus()) {
+        if (raClientBindStatus.bindStatus.value) {
             synchronized(LockHelper.BIND_RESULT_OBJ_LOCK) {
-                if (RaClientHandler.INSTANCE.clientIsBoundStatus()) {
+                if (raClientBindStatus.bindStatus.value) {
                     Log.d(TAG, "[CLIENT] Unbinding from RaMessageService, Thread: ${Thread.currentThread()}")
                     // 1. Trying to send the message of disconnected to server if the connection is good.
-                    RaClientHandler.INSTANCE.trySendDisconnectedToService()
-                    // 2. Null the outBoundMessenger
-                    outBoundMessenger = null
-                    RaClientHandler.INSTANCE.setOutBoundMessenger(null)
+                    raClientHandler.trySendDisconnectedToService()
+                    raClientHandler.setOutBoundMessenger(null)
                     // 3. Last, unbind the service
                     context.unbindService(this)
                     // 4. mark the flag as true
-                    makeIsUnbindTriggeredByManualUseCAS(true)
+                    _isUnbindTriggeredByManualStateFlow.value = true
                     Log.d(TAG, "unbindRaConnectionService: done")
                 } else {
                     Log.w(TAG, "[CLIENT] Already in unbinding, Ignore this request, Thread: ${Thread.currentThread()}")

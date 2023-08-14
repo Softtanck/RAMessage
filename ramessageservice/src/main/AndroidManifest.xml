@@ -22,6 +22,10 @@
             android:name=".RaConnectionService"
             android:enabled="true"
             android:exported="true" />
+        <service
+            android:name=".RaConnectionServiceV2"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 
 </manifest>

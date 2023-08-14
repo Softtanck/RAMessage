@@ -1,5 +1,6 @@
 package com.softtanck.ramessageclient.core.engine.retrofit
 
+import android.content.ComponentName
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
@@ -8,12 +9,12 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 internal class RaRetrofit(private val validateEagerly: Boolean) {
-    private val serviceMethodCache: MutableMap<Method, ServiceMethod<*>?> = ConcurrentHashMap()
+    private val serviceMethodCache: MutableMap<ComponentName, MutableMap<Method, ServiceMethod<*>?>> = ConcurrentHashMap()
 
     @Suppress("UNCHECKED_CAST")
     // Single-interface proxy creation guarded by parameter safety.
-    fun <T> create(service: Class<T>): T {
-        validateServiceInterface(service)
+    fun <T> create(componentName: ComponentName, service: Class<T>): T {
+        validateServiceInterface(componentName = componentName, service = service)
         return Proxy.newProxyInstance(
             service.classLoader, arrayOf<Class<*>>(service),
             object : InvocationHandler {
@@ -26,12 +27,12 @@ internal class RaRetrofit(private val validateEagerly: Boolean) {
                         return method.invoke(this, *args!!)
                     }
                     val platform = Platform.get()
-                    return if (platform.isDefaultMethod(method)) platform.invokeDefaultMethod(method, service, proxy, *(args ?: emptyArgs)) else loadServiceMethod(method)?.invoke(args)
+                    return if (platform.isDefaultMethod(method)) platform.invokeDefaultMethod(method, service, proxy, *(args ?: emptyArgs)) else loadServiceMethod(componentName = componentName, method = method)?.invoke(args)
                 }
             }) as T
     }
 
-    private fun validateServiceInterface(service: Class<*>) {
+    private fun validateServiceInterface(componentName: ComponentName, service: Class<*>) {
         require(service.isInterface) { "API declarations must be interfaces." }
         val check: Deque<Class<*>> = ArrayDeque(1)
         check.add(service)
@@ -50,20 +51,20 @@ internal class RaRetrofit(private val validateEagerly: Boolean) {
             val platform = Platform.get()
             for (method in service.declaredMethods) {
                 if (!platform.isDefaultMethod(method) && !Modifier.isStatic(method.modifiers)) {
-                    loadServiceMethod(method)
+                    loadServiceMethod(componentName = componentName, method = method)
                 }
             }
         }
     }
 
-    fun loadServiceMethod(method: Method): ServiceMethod<*>? {
-        var result = serviceMethodCache[method]
+    fun loadServiceMethod(componentName: ComponentName, method: Method): ServiceMethod<*>? {
+        var result = serviceMethodCache[componentName]?.get(method)
         if (result != null) return result
         synchronized(serviceMethodCache) {
-            result = serviceMethodCache[method]
+            result = serviceMethodCache[componentName]?.get(method)
             if (result == null) {
-                result = ServiceMethod.parseAnnotations<Any>(method)
-                serviceMethodCache[method] = result
+                result = ServiceMethod.parseAnnotations<Any>(componentName, method)
+                serviceMethodCache[componentName]?.set(method, result)
             }
         }
         return result

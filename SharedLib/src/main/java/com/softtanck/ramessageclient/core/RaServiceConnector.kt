@@ -2,57 +2,52 @@ package com.softtanck.ramessageclient.core
 
 import android.content.ComponentName
 import android.content.Context
-import android.os.Bundle
 import android.os.IBinder
-import android.os.Message
 import android.util.Log
-import com.softtanck.MESSAGE_BUNDLE_REPLY_TO_KEY
-import com.softtanck.MESSAGE_REGISTER_CLIENT_REQ
+import com.softtanck.model.RaCustomMessenger
 import com.softtanck.ramessage.IRaMessenger
 import com.softtanck.ramessageclient.RaClientApi
-import com.softtanck.ramessageclient.core.engine.RaClientHandler
+import com.softtanck.ramessageclient.core.model.RaClientBindStatus
 
 /**
  * @author Softtanck
  * @date 2022/3/12
  * Description: TODO
  */
-internal class RaServiceConnector(context: Context) : BaseServiceConnection(context) {
+internal class RaServiceConnector(context: Context, clientBindStatus: RaClientBindStatus) : BaseServiceConnection(context, clientBindStatus) {
+
+    data class RaRemoteConnection(val serviceConnector: RaServiceConnector)
 
     companion object {
         private val TAG: String = RaServiceConnector::class.java.simpleName
     }
 
     // NOTE: This method works on Main thread.
-    override fun onServiceConnected(name: ComponentName, service: IBinder) {
-        Log.d(TAG, "[CLIENT] onServiceConnected : $name, serviceDesc:${service.interfaceDescriptor}, thread:${Thread.currentThread()}")
-        outBoundMessenger = IRaMessenger.Stub.asInterface(service)
-        RaClientHandler.INSTANCE.setOutBoundMessenger(outBoundMessenger)
-        outBoundMessenger?.send(Message.obtain(null, MESSAGE_REGISTER_CLIENT_REQ).apply {
-            // replyTo InBoundMessenger as Messenger if the client is failed to reflect the messenger.
-            data = Bundle().apply {
-                putParcelable(MESSAGE_BUNDLE_REPLY_TO_KEY, RaClientHandler.INSTANCE.getInBoundMessenger())
-            }
-        }) ?: Log.e(TAG, "[CLIENT] Failed to send msg to server, Since outBoundMessenger type is null")
+    override fun onServiceConnected(componentName: ComponentName, service: IBinder) {
+        Log.d(TAG, "[CLIENT] onServiceConnected : $componentName, serviceDesc:${service.interfaceDescriptor}, thread:${Thread.currentThread()}")
+        raClientHandler.setOutBoundMessenger(IRaMessenger.Stub.asInterface(service))
+        if (!raClientHandler.sendRegisterMsgToServer(RaCustomMessenger(raClientHandler))) {
+            Log.e(TAG, "[CLIENT] Failed to send msg to server, Since outBoundMessenger type is null")
+        }
     }
 
-    override fun onServiceDisconnected(name: ComponentName) {
-        Log.d(TAG, "[CLIENT] onServiceDisconnected : $name, thread:${Thread.currentThread()}")
-        RaClientHandler.INSTANCE.onBindStatusChanged(false)
+    override fun onServiceDisconnected(componentName: ComponentName) {
+        Log.d(TAG, "[CLIENT] onServiceDisconnected : $componentName, thread:${Thread.currentThread()}")
+        raClientHandler.onBindStatusChanged(false)
     }
 
-    override fun onBindingDied(name: ComponentName) {
-        val unbindTriggeredByManual = isUnbindTriggeredByManual()
-        Log.w(TAG, "[CLIENT] onBindingDied : $name, unbindTriggeredByManual:$unbindTriggeredByManual")
+    override fun onBindingDied(componentName: ComponentName) {
+        val unbindTriggeredByManual = isUnbindTriggeredByManualStateFlow.value
+        Log.w(TAG, "[CLIENT] onBindingDied : $componentName, unbindTriggeredByManual:$unbindTriggeredByManual")
         if (!unbindTriggeredByManual) { // Retry logic is performed only the connection disconnected from the system.
             unbindRaConnectionService()
             // Looks like the server is dead, so we should try to reconnect.
             // TODO : Delay should be added?
-            RaClientApi.INSTANCE.bindRaConnectionService(context, name)
+            RaClientApi.INSTANCE.bindRaConnectionService(context = context, componentName = componentName)
         }
     }
 
-    override fun onNullBinding(name: ComponentName) {
-        Log.w(TAG, "[CLIENT] onNullBinding : $name")
+    override fun onNullBinding(componentName: ComponentName) {
+        Log.w(TAG, "[CLIENT] onNullBinding : $componentName")
     }
 }

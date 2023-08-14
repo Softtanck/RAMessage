@@ -41,7 +41,7 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
             response
         } else {
             // The message will be changed in the interceptor chain, so we need to return the message directly
-            sendMsgToClient(message)
+            sendMsgToClient(serviceKey = this@BaseConnectionService.javaClass.name, message = message)
             null
         }
     }
@@ -85,7 +85,7 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
         Log.d(TAG, "[SERVER] onTaskRemoved")
     }
 
-    private fun sendMsgToClient(message: Message) {
-        RaClientManager.sendMsgToClient(message)
+    private fun sendMsgToClient(serviceKey: String?, message: Message) {
+        RaClientManager.sendMsgToClient(serviceKey = serviceKey, message = message)
     }
 }

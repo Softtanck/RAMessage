@@ -22,23 +22,23 @@ internal object RaClientManager {
     private val TAG = RaClientManager::class.java.simpleName
 
     /**
-     * All clients put into this map.
+     * All clients put into this set.
      */
-    private val clients: LinkedHashSet<RaClient<Parcelable>> = LinkedHashSet()
+    val clients: LinkedHashSet<RaClient<Parcelable>> = LinkedHashSet()
 
     /**
      * Add current client into the clients map, then send the connection register state to the client.
      * @param msg The message from the clients.
      */
-    fun registerClientFromBinderWithMessage(msg: Message) {
+    fun registerClientFromBinderWithMessage(serviceKey: String, msg: Message) {
         synchronized(clients) {
             Log.d(TAG, "[SERVER] RaServerHandler handleMessage: MESSAGE_REGISTER_CLIENT_REQ, msg.sendingUid:${msg.sendingUid}")
             val dataFromClient = msg.data.apply { classLoader = this@RaClientManager.javaClass.classLoader }
             val tempRaClient = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                RaClient(msg.sendingUid, dataFromClient.getParcelable(MESSAGE_BUNDLE_REPLY_TO_KEY, Parcelable::class.java) as? RaCustomMessenger ?: msg.replyTo)
+                RaClient(clientUID = msg.sendingUid, clientMessenger = dataFromClient.getParcelable(MESSAGE_BUNDLE_REPLY_TO_KEY, Parcelable::class.java) as? RaCustomMessenger ?: msg.replyTo, serviceKey = serviceKey)
             } else {
                 @Suppress("DEPRECATION")
-                RaClient(msg.sendingUid, dataFromClient.getParcelable<Parcelable>(MESSAGE_BUNDLE_REPLY_TO_KEY) as? RaCustomMessenger ?: msg.replyTo)
+                RaClient(clientUID = msg.sendingUid, clientMessenger = dataFromClient.getParcelable<Parcelable>(MESSAGE_BUNDLE_REPLY_TO_KEY) as? RaCustomMessenger ?: msg.replyTo, serviceKey = serviceKey)
             }
             clients.add(tempRaClient)
             try {
@@ -52,14 +52,19 @@ internal object RaClientManager {
 
     /**
      * Send a message to client.
+     * @param serviceKey The service key of the client. like: com.softtanck.ramessageservice.RaConnectionService
      * @param message The message to send.
      */
-    fun sendMsgToClient(message: Message) {
+    fun sendMsgToClient(serviceKey: String?, message: Message) {
         synchronized(clients) {
             val iterator = clients.iterator()
             while (iterator.hasNext()) {
                 val client = iterator.next()
-                Log.d(TAG, "[SERVER] sendMsgToClient: client.uid:${client.clientUID}")
+                Log.d(TAG, "[SERVER] sendMsgToClient(what:${message.what}): client.uid:${client.clientUID}, client.serviceKey:${client.serviceKey}, current serviceKey:$serviceKey")
+                if (!serviceKey.isNullOrEmpty() && client.serviceKey != serviceKey) {
+                    Log.d(TAG, "[SERVER] sendMsgToClient(what:${message.what}): dropped, since client.serviceKey:${client.serviceKey} != current serviceKey:$serviceKey")
+                    continue
+                }
                 //  Need to check the pid if the client is running in the same process.
                 //  and send the message to the client only if the client is running in the same process.
                 //  Also, the request type of message needs to checked (Single point and broadcast)
