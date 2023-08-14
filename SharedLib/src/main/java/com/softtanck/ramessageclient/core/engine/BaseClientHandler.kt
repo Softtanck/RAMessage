@@ -12,7 +12,6 @@ import com.softtanck.ramessageclient.core.listener.RaRemoteMessageListener
 import com.softtanck.ramessageclient.core.model.RaClientBindStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -50,7 +49,7 @@ internal abstract class BaseClientHandler(looper: Looper, private val raClientBi
      * Remember all callbacks from the client. And WeakReference is used as value.
      * That can be void memory leaks here.
      */
-    protected val singleCallbacks: SparseArray<WeakReference<RaRemoteMessageListener>> = SparseArray<WeakReference<RaRemoteMessageListener>>()
+    protected val singleCallbacks: SparseArray<RaRemoteMessageListener> = SparseArray<RaRemoteMessageListener>()
 
     /**
      * will be called when a message arrived from server.
@@ -91,7 +90,7 @@ internal abstract class BaseClientHandler(looper: Looper, private val raClientBi
                 outputMessengerStateFlow.value?.let { messenger ->
                     val tempTrxId = safelyIncrement()
                     synchronized(singleCallbacks) {
-                        singleCallbacks.put(tempTrxId, WeakReference(raRemoteMessageListener))
+                        singleCallbacks.put(tempTrxId, raRemoteMessageListener)
                     }
                     messenger.send(message.apply { arg1 = tempTrxId })
                     true
@@ -121,7 +120,7 @@ internal abstract class BaseClientHandler(looper: Looper, private val raClientBi
             outputMessengerStateFlow.value?.let { messenger ->
                 val tempTrxId = safelyIncrement()
                 synchronized(singleCallbacks) {
-                    singleCallbacks.put(tempTrxId, WeakReference(raRemoteMessageListener))
+                    singleCallbacks.put(tempTrxId, raRemoteMessageListener)
                 }
                 messenger.send(message.apply { arg1 = tempTrxId })
                 true

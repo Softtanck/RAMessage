@@ -126,7 +126,6 @@ internal class RaDefaultInterceptImpl : IRaResponseIntercept {
                             putByte(MESSAGE_BUNDLE_NORMAL_RSP_KEY, remoteCallResult)
                         }
                     }
-                    // TODO ： More details will be implemented
                 }
             }
         } catch (e: Exception) {

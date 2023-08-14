@@ -42,13 +42,11 @@ internal class RaClientHandler(looper: Looper, private val raClientBindStatus: R
                 Log.d(TAG, "[CLIENT] Received a new msg from server: $msg, trxID: ${msg.arg1}")
                 singleCallbacks.get(msg.arg1)?.run {
                     // 1. first is the callback needs to be called
-                    get()?.onMessageArrived(message = msg)
-                    // 2. then remove the callback from the map
-                    clear()
-                }
-                // 3. finally, remove the trxID from the map
-                synchronized(singleCallbacks) {
-                    singleCallbacks.remove(msg.arg1)
+                    onMessageArrived(message = msg)
+                    // 2. finally, remove the trxID from the map
+                    synchronized(singleCallbacks) {
+                        singleCallbacks.remove(msg.arg1)
+                    }
                 }
             }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Softtanck.
+ * Copyright (C) 2023 Softtanck.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,12 @@ import com.softtanck.ramessageservice.BaseConnectionService
  * @date 2022/3/12
  * Description: TODO
  */
-internal open class BaseServerSyncHandler(looper: Looper, baseConnectionService: BaseConnectionService) : Handler(looper) {
-    private var baseConnectionService: BaseConnectionService? = baseConnectionService
+internal open class BaseServerSyncHandler(looper: Looper, private val baseConnectionService: BaseConnectionService) : Handler(looper) {
 
     // IRaMessenger / IMessenger
-    val innerMessenger: IRaMessenger.Stub = BaseSyncHandlerImp()
+    val innerMessenger: IRaMessenger.Stub = BaseSyncHandlerImpl()
 
-    private inner class BaseSyncHandlerImp : IRaMessenger.Stub() {
+    private inner class BaseSyncHandlerImpl : IRaMessenger.Stub() {
         override fun send(msg: Message) {
             msg.sendingUid = getCallingUid()
             this@BaseServerSyncHandler.sendMessage(msg)
@@ -40,7 +39,7 @@ internal open class BaseServerSyncHandler(looper: Looper, baseConnectionService:
 
         override fun sendSync(msg: Message): Message {
             msg.sendingUid = getCallingUid()
-            return baseConnectionService?.onRemoteMessageArrived(msg, true) ?: Message.obtain(msg)
+            return baseConnectionService.onRemoteMessageArrived(msg, true) ?: Message.obtain(msg)
         }
     }
 }
