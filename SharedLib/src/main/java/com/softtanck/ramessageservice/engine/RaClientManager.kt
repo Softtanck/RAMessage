@@ -62,7 +62,7 @@ internal object RaClientManager {
                 val client = iterator.next()
                 Log.d(TAG, "[SERVER] sendMsgToClient(what:${message.what}): client.uid:${client.clientUID}, client.serviceKey:${client.serviceKey}, current serviceKey:$serviceKey")
                 if (!serviceKey.isNullOrEmpty() && client.serviceKey != serviceKey) {
-                    Log.w(TAG, "[SERVER] sendMsgToClient(what:${message.what}): dropped, since client.serviceKey:${client.serviceKey} != current serviceKey:$serviceKey")
+                    Log.d(TAG, "[SERVER] sendMsgToClient(what:${message.what}): dropped, since client.serviceKey:${client.serviceKey} != current serviceKey:$serviceKey")
                     continue
                 }
                 //  Need to check the pid if the client is running in the same process.

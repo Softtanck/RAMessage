@@ -20,6 +20,10 @@ class MainActivity : AppCompatActivity() {
     private val componentName = ComponentName("com.softtanck.ramessageservice", "com.softtanck.ramessageservice.RaConnectionService")
     private val componentNameV2 = ComponentName("com.softtanck.ramessageservice", "com.softtanck.ramessageservice.RaConnectionServiceV2")
 
+    companion object {
+        private const val TAG = "MainActivity"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -27,58 +31,58 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_connect_first_service).setOnClickListener {
             RaClientApi.INSTANCE.bindRaConnectionService(this, componentName, object : BindStatusChangedListener {
                 override fun onConnectedToRaServices(componentName: ComponentName) {
-                    Log.d("~~~", "connectedToRaServices: $this-$componentName")
+                    Log.d(TAG, "connectedToRaServices: $this-$componentName")
                     val testInterface = RaClientApi.INSTANCE.create(componentName = componentName, service = RaTestInterface::class.java)
                     // 1. Get a food from other process
                     var remoteFood: Food? = testInterface.getAFood()
-                    Log.d("~~~", "getAFood result: $remoteFood")
+                    Log.d(TAG, "getAFood result: $remoteFood")
                     if (remoteFood?.name != "Apple") {
                         throw IllegalStateException("Get a food from other process failed")
                     }
 
                     // 2. Get a food with parameter
                     remoteFood = testInterface.getAFoodWithParameter("Banana")
-                    Log.d("~~~", "getAFoodWithParameter: $remoteFood")
+                    Log.d(TAG, "getAFoodWithParameter: $remoteFood")
 
                     // 3. Get all foods
                     val allFoods = testInterface.getAllFoods()
-                    Log.d("~~~", "getAllFoods: $allFoods, ${allFoods?.size}")
+                    Log.d(TAG, "getAllFoods: $allFoods, ${allFoods?.size}")
 
                     // 4. Eat food
                     testInterface.eatFood()
 
                     // 5. Buy a food
                     val buyFoodResult = testInterface.buyFood()
-                    Log.d("~~~", "buyFood: $buyFoodResult")
+                    Log.d(TAG, "buyFood: $buyFoodResult")
 
                     // 6. Get a food name
                     val foodName = testInterface.getFoodName()
-                    Log.d("~~~", "getFoodName: $foodName")
+                    Log.d(TAG, "getFoodName: $foodName")
 
                     // 7. Set food name
                     val changedFoodName = testInterface.setFoodName("Pear")
-                    Log.d("~~~", "setFoodName: $changedFoodName")
+                    Log.d(TAG, "setFoodName: $changedFoodName")
 
                     // 8. Suspend
                     lifecycleScope.launch(Dispatchers.IO) {
 
                         // 8.1 buy food
                         val suspendBuyFoodResult = testInterface.suspendBuyFood()
-                        Log.d("~~~", "suspendBuyFood: $suspendBuyFoodResult")
+                        Log.d(TAG, "suspendBuyFood: $suspendBuyFoodResult")
 
                         // 8.2 get food
                         val suspendGetFood = testInterface.suspendGetFood()
-                        Log.d("~~~", "suspendGetFood: $suspendGetFood")
+                        Log.d(TAG, "suspendGetFood: $suspendGetFood")
 
                     }
                 }
 
                 override fun onConnectRaServicesFailed(componentName: ComponentName) {
-                    Log.d("~~~", "onConnectRaServicesFailed: $componentName")
+                    Log.d(TAG, "onConnectRaServicesFailed: $componentName")
                 }
 
                 override fun onDisconnectedFromRaServices(componentName: ComponentName, @DisconnectedReason disconnectedReason: Int) {
-                    Log.d("~~~", "disconnectedFromRaServices: $disconnectedReason-$componentName")
+                    Log.d(TAG, "disconnectedFromRaServices: $disconnectedReason-$componentName")
                 }
             })
         }
@@ -86,58 +90,58 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_connect_second_service).setOnClickListener {
             RaClientApi.INSTANCE.bindRaConnectionService(this, componentNameV2, object : BindStatusChangedListener {
                 override fun onConnectedToRaServices(componentName: ComponentName) {
-                    Log.d("~~~", "connectedToRaServices: $this-$componentName")
+                    Log.d(TAG, "connectedToRaServices: $this-$componentName")
                     val testInterface = RaClientApi.INSTANCE.create(componentName = componentName, service = RaTestInterface::class.java)
                     // 1. Get a food from other process
                     var remoteFood: Food? = testInterface.getAFood()
-                    Log.d("~~~", "getAFood result: $remoteFood")
+                    Log.d(TAG, "getAFood result: $remoteFood")
                     if (remoteFood?.name != "AppleV2") {
                         throw IllegalStateException("Get a food from other process failed")
                     }
 
                     // 2. Get a food with parameter
                     remoteFood = testInterface.getAFoodWithParameter("Banana")
-                    Log.d("~~~", "getAFoodWithParameter: $remoteFood")
+                    Log.d(TAG, "getAFoodWithParameter: $remoteFood")
 
                     // 3. Get all foods
                     val allFoods = testInterface.getAllFoods()
-                    Log.d("~~~", "getAllFoods: $allFoods, ${allFoods?.size}")
+                    Log.d(TAG, "getAllFoods: $allFoods, ${allFoods?.size}")
 
                     // 4. Eat food
                     testInterface.eatFood()
 
                     // 5. Buy a food
                     val buyFoodResult = testInterface.buyFood()
-                    Log.d("~~~", "buyFood: $buyFoodResult")
+                    Log.d(TAG, "buyFood: $buyFoodResult")
 
                     // 6. Get a food name
                     val foodName = testInterface.getFoodName()
-                    Log.d("~~~", "getFoodName: $foodName")
+                    Log.d(TAG, "getFoodName: $foodName")
 
                     // 7. Set food name
                     val changedFoodName = testInterface.setFoodName("Pear")
-                    Log.d("~~~", "setFoodName: $changedFoodName")
+                    Log.d(TAG, "setFoodName: $changedFoodName")
 
                     // 8. Suspend
                     lifecycleScope.launch(Dispatchers.IO) {
 
                         // 8.1 buy food
                         val suspendBuyFoodResult = testInterface.suspendBuyFood()
-                        Log.d("~~~", "suspendBuyFood: $suspendBuyFoodResult")
+                        Log.d(TAG, "suspendBuyFood: $suspendBuyFoodResult")
 
                         // 8.2 get food
                         val suspendGetFood = testInterface.suspendGetFood()
-                        Log.d("~~~", "suspendGetFood: $suspendGetFood")
+                        Log.d(TAG, "suspendGetFood: $suspendGetFood")
 
                     }
                 }
 
                 override fun onConnectRaServicesFailed(componentName: ComponentName) {
-                    Log.d("~~~", "onConnectRaServicesFailed: $componentName")
+                    Log.d(TAG, "onConnectRaServicesFailed: $componentName")
                 }
 
                 override fun onDisconnectedFromRaServices(componentName: ComponentName, @DisconnectedReason disconnectedReason: Int) {
-                    Log.d("~~~", "disconnectedFromRaServices: $disconnectedReason-$componentName")
+                    Log.d(TAG, "disconnectedFromRaServices: $disconnectedReason-$componentName")
                 }
             })
         }
@@ -146,10 +150,10 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         RaClientApi.INSTANCE.addRemoteBroadcastMessageListener(componentName = componentName) { msg ->
-            Log.d("~~~", "onResume broadcast: $msg-V1")
+            Log.d(TAG, "onResume broadcast: $msg-V1")
         }
         RaClientApi.INSTANCE.addRemoteBroadcastMessageListener(componentName = componentNameV2) { msg ->
-            Log.d("~~~", "onResume broadcast: $msg-V2")
+            Log.d(TAG, "onResume broadcast: $msg-V2")
         }
     }
 
