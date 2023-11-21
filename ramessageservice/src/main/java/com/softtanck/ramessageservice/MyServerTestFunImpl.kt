@@ -53,6 +53,7 @@ interface MyServerTestFunImpl : RaTestInterface {
 
     override fun setFoodName(foodName: String): String {
         Log.d("~~~", "[SERVER] setFoodName: $foodName")
+        testFood.name = foodName
         return testFood.name
     }
 

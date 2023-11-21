@@ -51,6 +51,26 @@ internal object RaClientManager {
     }
 
     /**
+     * Remove the client from the clients map.
+     * @param serviceKey The service key of the client. like: com.softtanck.ramessageservice.RaConnectionService
+     * @param msg The message from the clients.
+     */
+    fun removeClientFromBinderWithMessage(serviceKey: String, msg: Message) {
+        synchronized(clients) {
+            Log.d(TAG, "[SERVER] RaServerHandler handleMessage: MESSAGE_CLIENT_DISCONNECT_REQ, msg.sendingUid:${msg.sendingUid}")
+            val iterator = clients.iterator()
+            while (iterator.hasNext()) {
+                val client = iterator.next()
+                if (client.clientUID == msg.sendingUid && client.serviceKey == serviceKey) {
+                    iterator.remove()
+                    Log.d(TAG, "[SERVER] Client is removed. No of active clients : ${clients.size}")
+                    break
+                }
+            }
+        }
+    }
+
+    /**
      * Send a message to client.
      * @param serviceKey The service key of the client. like: com.softtanck.ramessageservice.RaConnectionService
      * @param message The message to send.

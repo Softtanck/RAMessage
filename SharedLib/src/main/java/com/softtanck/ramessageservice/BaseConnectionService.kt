@@ -12,6 +12,7 @@ import com.softtanck.ramessageservice.engine.RaClientManager
 import com.softtanck.ramessageservice.engine.RaServerHandler
 import com.softtanck.ramessageservice.intercept.IRaResponseIntercept
 import com.softtanck.ramessageservice.intercept.RaDefaultInterceptImpl
+import com.softtanck.ramessageservice.intercept.RaUnbindInterceptImpl
 import com.softtanck.ramessageservice.intercept.RealInterceptorChain
 
 /**
@@ -26,6 +27,7 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
 
     // Add an interceptor chain for developers to add their own interceptors
     private val intercepts = mutableListOf<IRaResponseIntercept>().apply {
+        add(RaUnbindInterceptImpl(serviceKey = this@BaseConnectionService.javaClass.name))
         add(RaDefaultInterceptImpl())
     }
 
@@ -71,6 +73,11 @@ abstract class BaseConnectionService(private val startInForeground: Boolean = tr
         } else {
             throw IllegalStateException("[SERVER] Failed to get the Messenger, Please check your handler")
         }
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        Log.d(TAG, "[SERVER] onUnbind, intent:$intent")
+        return super.onUnbind(intent)
     }
 
     override fun onDestroy() {
