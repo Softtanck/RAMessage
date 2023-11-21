@@ -151,15 +151,24 @@ class RaClientApi private constructor() {
     fun isBoundToService(componentName: ComponentName) = remoteConnections.find { it.serviceConnector.raClientBindStatus.componentName == componentName }?.serviceConnector?.raClientBindStatus?.bindStatus ?: false
 
     /**
-     * Destroy all resources.
+     * Disconnect all connections.
+     * NOTE: All remote broadcast message listeners will not be removed.
+     * If you want to remove all listeners, please call [clearAllRemoteBroadcastMessageListener]
      */
-    fun destroyAllResources() {
+    fun disconnectAll() {
         synchronized(remoteConnections) {
             remoteConnections.forEach { it.serviceConnector.unbindRaConnectionService() }
             remoteConnections.clear()
         }
-        ClientListenerManager.INSTANCE.clearAllRemoteBroadCastMessageCallbacks()
         ClientListenerManager.INSTANCE.clearAllBindStatusChangedListener()
+    }
+
+    /**
+     * Destroy all resources. include connections, callbacks(like: [RaRemoteMessageListener])
+     */
+    fun destroyAllResources() {
+        disconnectAll()
+        ClientListenerManager.INSTANCE.clearAllRemoteBroadCastMessageCallbacks()
     }
 
     /**

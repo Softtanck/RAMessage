@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
                 override fun onConnectedToRaServices(componentName: ComponentName) {
                     Log.d(TAG, "connectedToRaServices: $this-$componentName")
                     val testInterface = RaClientApi.INSTANCE.create(componentName = componentName, service = RaTestInterface::class.java)
+                    testInterface.setFoodName("Apple")
                     // 1. Get a food from other process
                     var remoteFood: Food? = testInterface.getAFood()
                     Log.d(TAG, "getAFood result: $remoteFood")
@@ -92,6 +93,7 @@ class MainActivity : AppCompatActivity() {
                 override fun onConnectedToRaServices(componentName: ComponentName) {
                     Log.d(TAG, "connectedToRaServices: $this-$componentName")
                     val testInterface = RaClientApi.INSTANCE.create(componentName = componentName, service = RaTestInterface::class.java)
+                    testInterface.setFoodName("AppleV2")
                     // 1. Get a food from other process
                     var remoteFood: Food? = testInterface.getAFood()
                     Log.d(TAG, "getAFood result: $remoteFood")
@@ -144,6 +146,10 @@ class MainActivity : AppCompatActivity() {
                     Log.d(TAG, "disconnectedFromRaServices: $disconnectedReason-$componentName")
                 }
             })
+        }
+
+        findViewById<Button>(R.id.btn_disconnect_all).setOnClickListener {
+            RaClientApi.INSTANCE.disconnectAll()
         }
     }
 

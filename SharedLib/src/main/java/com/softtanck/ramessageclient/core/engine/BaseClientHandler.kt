@@ -184,6 +184,7 @@ internal abstract class BaseClientHandler(looper: Looper, private val raClientBi
         synchronized(singleCallbacks) {
             singleCallbacks.clear()
         }
-        ClientListenerManager.INSTANCE.clearAllRemoteBroadCastMessageCallbacks(raClientBindStatus.componentName)
+        // Generally speaking, the broadcast should be removed by the developers themselves. So I have commented out this code.
+        // ClientListenerManager.INSTANCE.clearAllRemoteBroadCastMessageCallbacks(raClientBindStatus.componentName)
     }
 }

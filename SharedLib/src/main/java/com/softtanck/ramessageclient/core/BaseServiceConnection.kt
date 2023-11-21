@@ -120,7 +120,7 @@ abstract class BaseServiceConnection(val context: Context, val raClientBindStatu
                     context.unbindService(this)
                     // 4. mark the flag as true
                     _isUnbindTriggeredByManualStateFlow.value = true
-                    Log.d(TAG, "unbindRaConnectionService: done")
+                    Log.d(TAG, "[CLIENT] unbindRaConnectionService: done")
                 } else {
                     Log.w(TAG, "[CLIENT] Already in unbinding, Ignore this request, Thread: ${Thread.currentThread()}")
                 }

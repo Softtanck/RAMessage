@@ -116,11 +116,25 @@ internal class RaClientHandler(looper: Looper, private val raClientBindStatus: R
         }
     }
 
+    private fun sendMsgWithoutResetMsgWhatCompat(message: Message) {
+        if (outputMessengerStateFlow.value != null && outputMessengerStateFlow.value is RaCustomMessenger) {
+            sendMsgToServerAsyncWithoutResetMsgWhat(message)
+        } else {
+            sendMsgToServerSyncWithoutResetMsgWhat(message)
+        }
+    }
+
     fun trySendDisconnectedToService() {
-        sendMsgToServiceCompat(Message.obtain().apply { what = MESSAGE_CLIENT_DISCONNECT_REQ })
+        sendMsgWithoutResetMsgWhatCompat(Message.obtain().apply { what = MESSAGE_CLIENT_DISCONNECT_REQ })
         // I think you are disconnected with service, So hardcode here.
         onBindStatusChanged(false, RA_DISCONNECTED_MANUAL)
     }
+
+    private fun sendMsgToServerAsyncWithoutResetMsgWhat(message: Message) {
+        sendAsyncMessageToServer(message)
+    }
+
+    private fun sendMsgToServerSyncWithoutResetMsgWhat(message: Message): Message? = sendSyncMessageToServer(message)
 
     fun sendMsgToServerAsync(message: Message, raRemoteMessageListener: RaRemoteMessageListener? = null) {
         sendAsyncMessageToServer(message.apply { what = MESSAGE_CLIENT_SINGLE_REQ }, raRemoteMessageListener)

@@ -4,6 +4,9 @@ import android.os.Message
 import android.util.Log
 import com.shared.model.Food
 import com.softtanck.ramessageservice.ipc.RaTestInterface
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private val testFood = Food("AppleV2")
 
@@ -46,6 +49,7 @@ interface MyServerTestFunImplV2 : RaTestInterface {
 
     override fun setFoodName(foodName: String): String {
         Log.d("~~~", "[SERVER] setFoodName: $foodName V2")
+        testFood.name = foodName
         return testFood.name
     }
 
@@ -58,6 +62,12 @@ interface MyServerTestFunImplV2 : RaTestInterface {
         Log.d("~~~", "[SERVER] suspendGetFood V2")
         // You will received the broadcast message in client
         RaServerApi.INSTANCE.sendBroadcastToAllClients(serviceKey = RaServerApi.INSTANCE.getAllRaClientServiceKeys().find { it == RaConnectionServiceV2::class.java.name }, message = Message.obtain())
+        GlobalScope.launch {
+            while (true) {
+                delay(5000)
+                RaServerApi.INSTANCE.sendBroadcastToAllClients(serviceKey = RaServerApi.INSTANCE.getAllRaClientServiceKeys().find { it == RaConnectionServiceV2::class.java.name }, message = Message.obtain())
+            }
+        }
         return testFood
     }
 }

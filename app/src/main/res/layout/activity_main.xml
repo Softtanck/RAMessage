@@ -24,4 +24,13 @@
         app:layout_constraintTop_toBottomOf="@+id/btn_connect_first_service"
         tools:ignore="MissingConstraints" />
 
+    <Button
+        android:id="@+id/btn_disconnect_all"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Disconnect All"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_connect_second_service"
+        tools:ignore="MissingConstraints" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
