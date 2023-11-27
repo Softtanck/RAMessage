@@ -43,7 +43,7 @@ afterEvaluate {
                 from components.release
                 groupId = 'com.softtanck.ramessage'
                 artifactId = 'RaMessage'
-                version = '2.0.0-RC3'
+                version = '2.0.0'
             }
         }
     }
