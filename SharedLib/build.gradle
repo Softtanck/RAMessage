@@ -8,8 +8,8 @@ plugins {
 android {
     defaultConfig {
         minSdkVersion 23
-        compileSdk 33
-        buildToolsVersion = "33.0.1"
+        compileSdk 34
+        buildToolsVersion = "34.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -25,6 +25,14 @@ android {
         aidl true
     }
     namespace 'com.softtanck.sharedlib'
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
 }
 
 afterEvaluate {
@@ -42,8 +50,8 @@ afterEvaluate {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.10.1'
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1"
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
     // androidx.test
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
 }
