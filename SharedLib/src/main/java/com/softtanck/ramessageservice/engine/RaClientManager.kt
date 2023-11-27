@@ -28,6 +28,7 @@ internal object RaClientManager {
 
     /**
      * Add current client into the clients map, then send the connection register state to the client.
+     * @param serviceKey The service key of the client. like: com.softtanck.ramessageservice.RaConnectionService
      * @param msg The message from the clients.
      */
     fun registerClientFromBinderWithMessage(serviceKey: String, msg: Message) {

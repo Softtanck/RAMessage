@@ -4,6 +4,7 @@ import android.os.Message
 import android.util.Log
 import com.shared.model.Food
 import com.softtanck.ramessageservice.ipc.RaTestInterface
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -58,6 +59,7 @@ interface MyServerTestFunImplV2 : RaTestInterface {
         return true
     }
 
+    @DelicateCoroutinesApi
     override suspend fun suspendGetFood(): Food {
         Log.d("~~~", "[SERVER] suspendGetFood V2")
         // You will received the broadcast message in client
